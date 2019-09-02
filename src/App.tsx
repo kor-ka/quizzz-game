@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 
 const App: React.FC = () => {
+  let id = window.location.pathname.split('/').filter(s => s.length)[0];
   return (
     <div className="App">
       <header className="App-header">

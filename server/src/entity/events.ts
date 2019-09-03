@@ -1,6 +1,6 @@
 import { ClientUser } from "../user/User";
 import { GameState } from "../Game";
-import { SessionState } from "../Session";
+import { SessionState } from "../session/Session";
 
 export type Event = SessionUserJoinedEvent | SessionUserLeftEvent | SessionStateChangedEvent | UserUpdatedEvent | GameStateChangedEvent | GameScoreChangedEvent;
 

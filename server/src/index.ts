@@ -8,7 +8,7 @@ import * as socketIo from 'socket.io';
 import * as MobileDetect from 'mobile-detect';
 import { initMDB } from './MDB';
 import { createUser, getUser } from './user/User';
-import { createSession } from './Session';
+import { createSession } from './session/Session';
 import { UserConnection } from './user/UserConnection';
 
 const notSoSoon = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365 * 1000);

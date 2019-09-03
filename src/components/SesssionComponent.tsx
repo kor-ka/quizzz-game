@@ -1,8 +1,8 @@
 import * as React from "react";
-import { SessionState } from "../../server/src/Session";
+import { SessionState } from "../../server/src/session/Session";
 import { SessionContext } from "../App";
 import { ClientUser } from "../../server/src/user/User";
-import { FlexLayout, Button } from "../ui/ui";
+import { FlexLayout, Button, Input } from "../ui/ui";
 
 export const SessionComponent = () => {
     return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
@@ -34,7 +34,8 @@ export const SessionStateComponent = () => {
 
     return <>
         {JSON.stringify(state)}
-        <Button onClick={startStop} style={{ opacity: loading ? 0.5 : 1 }} >{state.state === 'await' ? 'start' : 'stop'}</Button>
+        <Profile />
+        {(state.state === 'await' || state.state === 'countdown') && <Button onClick={startStop} style={{ opacity: loading ? 0.5 : 1 }} >{state.state === 'await' ? 'start' : 'stop'}</Button>}
     </>
 }
 
@@ -49,5 +50,24 @@ export const Users = () => {
     }, [session]);
 
     return <>{JSON.stringify(state)}</>
+}
 
+export const Profile = () => {
+    let [me, setMe] = React.useState<ClientUser>();
+    let session = React.useContext(SessionContext);
+    React.useEffect(() => {
+        let dispose = session!.subscribeMeUser(s => {
+            setMe(s);
+        });
+        return dispose;
+    }, [session]);
+
+    let onChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        session!.io.emit({ type: 'UserRename', name: event.target.value })
+    }, []);
+
+    return <div>
+        me: {JSON.stringify(me)}
+        {me && <Input defaultValue={me.name} onChange={onChange} />}
+    </div>
 }

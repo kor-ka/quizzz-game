@@ -29,6 +29,8 @@ export class UserConnection {
     }
 
     init = async () => {
+
+        // autj
         for (let h of this.socket.request.headers.cookie.split('; ')) {
             let cookie = decodeURIComponent(h);
             if (cookie.startsWith('quizzz-game-user=')) {
@@ -44,6 +46,7 @@ export class UserConnection {
                 }
             }
 
+            // detect is mobile
             if (cookie.startsWith('isMobile=')) {
                 this.isMobile = h === 'isMobile=true';
             }
@@ -60,11 +63,13 @@ export class UserConnection {
             this.messages.push(message);
             return;
         }
+        // subscribe updates
         if (message.type === 'InitSession') {
             this.sessionWatcher = await getSessionWatcher(message.id);
             this.sessionWatcher.addUserConnection(this);
         }
 
+        // some actions
         await userHandeMessage(this.user!._id.toHexString(), message);
         await sessionHandleMessage(message);
     }

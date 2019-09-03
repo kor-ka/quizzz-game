@@ -1,9 +1,4 @@
-import { UserConnection } from "../user/UserConnection";
-import { GameWatcher } from "../Game";
-import { ChangeStream, ObjectId } from "mongodb";
-import { MDBChangeOp } from "../utils/MDBChangeOp";
-import { USERS, User, getUser, toClient } from "../user/User";
-import { Event } from "../entity/events";
+import { ObjectId } from "mongodb";
 import { Message } from "../entity/messages";
 import { MDB } from "../MDB";
 

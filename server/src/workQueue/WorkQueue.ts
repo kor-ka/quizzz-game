@@ -27,6 +27,7 @@ export interface GameChangeState extends WorkBase {
 
 export let WORK_QUEUE_SESSION = () => MDB.collection<SessionChangeState>('work_queue');
 export let WORK_QUEUE_GAME = () => MDB.collection<GameChangeState>('work_queue');
+let WORK_QUEUE = () => MDB.collection<Work>('work_queue');
 
 const performWork = async (work: Work) => {
     if (work.type === 'SessionChangeState') {

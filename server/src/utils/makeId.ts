@@ -1,4 +1,4 @@
-let makeId = () => {
+export let makeId = () => {
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 

@@ -1,33 +1,31 @@
-import MDB from "./MDB";
 import { UserConnection } from "./user/UserConnection";
 import { GameWatcher } from "./Game";
-import { ChangeStream } from "mongodb";
+import { ChangeStream, ObjectId } from "mongodb";
 import { MDBChangeOp } from "./utils/MDBChangeOp";
 import { USERS, User, getUser, toClient } from "./user/User";
 import { Event } from "./entity/events";
 import { Message } from "./entity/messages";
+import { MDB } from "./MDB";
 
 export type SessionState = 'await' | 'countdown' | 'game' | 'score'
-export let SESSIONS = MDB.collection<Session>('sessions');
-export let SESSION_USER = MDB.collection<SessionUser>('sessionUsers');
-SESSION_USER.createIndex({ sid: 1, uid: 1 }, { unique: true });
-
+export let SESSIONS = () => MDB.collection<Session>('sessions');
+export let SESSION_USER = () => MDB.collection<SessionUser>('sessionUsers');
 export interface Session {
-    _id: string;
+    _id: ObjectId;
     state: SessionState;
     stateTtl?: number;
     gameId?: string;
 }
 
 export interface SessionUser {
-    _id: string;
+    _id: ObjectId;
     sid: string;
     uid: string;
     topScore?: number;
 }
 
 export let createSession = async () => {
-    return await SESSIONS.insert({ state: 'await' });
+    return await SESSIONS().insertOne({ state: 'await' });
 }
 
 let sessionWatchers = new Map<string, SessionWatcher>();
@@ -58,10 +56,10 @@ export class SessionWatcher {
 
 
     init = async () => {
-        let session = await SESSIONS.findOne({ _id: this.id });
+        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
 
         // subscribe for updates
-        this.sessionWatcher = SESSIONS.watch([{ $match: { _id: this.id } }], { fullDocument: 'updateLookup' });
+        this.sessionWatcher = SESSIONS().watch([{ $match: { _id: this.id } }], { fullDocument: 'updateLookup' });
         this.sessionWatcher.on('change', async (next: MDBChangeOp<Session>) => {
             if (next.operationType === 'update') {
                 this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl });
@@ -69,12 +67,12 @@ export class SessionWatcher {
         });
 
 
-        let sessionUsers = await SESSION_USER.find({ sid: this.id });
+        let sessionUsers = await SESSION_USER().find({ sid: this.id });
         sessionUsers.map(this.watchUser);
 
 
         // detect user list changes
-        this.sessionUsersWatcher = SESSION_USER.watch([{ $match: { sid: this.id } }], { fullDocument: 'updateLookup' });
+        this.sessionUsersWatcher = SESSION_USER().watch([{ $match: { sid: this.id } }], { fullDocument: 'updateLookup' });
         this.sessionUsersWatcher.on('change', async (next: MDBChangeOp<SessionUser>) => {
             let user = await getUser(next.fullDocument.uid);
             if (next.operationType === 'insert') {
@@ -86,10 +84,10 @@ export class SessionWatcher {
                 if (user) {
                     this.emitAll({ type: 'SessionUserLeftEvent', sessionId: this.id, user: toClient(user) });
                 }
-                let w = this.userWatchers.get(next.fullDocument._id);
+                let w = this.userWatchers.get(next.fullDocument._id.toHexString());
                 if (w) {
                     await w.close();
-                    this.userWatchers.delete(next.fullDocument._id);
+                    this.userWatchers.delete(next.fullDocument._id.toHexString());
                 }
             }
         });
@@ -109,17 +107,17 @@ export class SessionWatcher {
     }
 
     startCountdown = async () => {
-        let session = await SESSIONS.findOne({ _id: this.id });
+        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         if (session && session.state === 'await') {
-            await SESSIONS.updateOne({ _id: session._id }, { $set: { state: 'countdown' } });
+            await SESSIONS().updateOne({ _id: session._id }, { $set: { state: 'countdown' } });
         }
 
     }
 
     stopCountDown = async () => {
-        let session = await SESSIONS.findOne({ _id: this.id });
+        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         if (session && session.state === 'countdown') {
-            await SESSIONS.updateOne({ _id: session._id }, { $set: { state: 'await' } });
+            await SESSIONS().updateOne({ _id: session._id }, { $set: { state: 'await' } });
         }
     }
 
@@ -128,13 +126,13 @@ export class SessionWatcher {
         // update user session state
         this.connections.add(connection);
         if (connection.isMobile) {
-            await SESSION_USER.updateOne({ uid: connection.user!._id, sid: this.id }, { $set: { isMobile: !!connection.isMobile } }, { upsert: true });
+            await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { isMobile: !!connection.isMobile } }, { upsert: true });
         } else {
-            await SESSION_USER.deleteOne({ uid: connection.user!._id, sid: this.id });
+            await SESSION_USER().deleteOne({ uid: connection.user!._id.toHexString(), sid: this.id });
         }
 
         // notify user about current state
-        let sessionUsers = await SESSION_USER.find({ sid: this.id, isMobile: true });
+        let sessionUsers = await SESSION_USER().find({ sid: this.id, isMobile: true });
 
         let batch: Event[] = [];
         sessionUsers.map(async su => {
@@ -144,7 +142,7 @@ export class SessionWatcher {
             }
         });
 
-        let session = await SESSIONS.findOne({ _id: this.id });
+        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state })
 
         // TODO: add game state
@@ -159,7 +157,7 @@ export class SessionWatcher {
             this.dispose();
             sessionWatchers.delete(this.id);
         }
-        SESSION_USER.deleteOne({ uid: connection.user!._id });
+        SESSION_USER().deleteOne({ uid: connection.user!._id.toHexString() });
     }
 
     ////
@@ -172,8 +170,8 @@ export class SessionWatcher {
     }
 
     watchUser = (user: SessionUser) => {
-        let watcher = USERS.watch([{ $match: { _id: user._id } }], { fullDocument: 'updateLookup' });
-        this.userWatchers.set(user._id, watcher);
+        let watcher = USERS().watch([{ $match: { _id: user._id } }], { fullDocument: 'updateLookup' });
+        this.userWatchers.set(user._id.toHexString(), watcher);
 
         watcher.on('change', async (next: MDBChangeOp<User>) => {
             if (next.operationType === 'update') {

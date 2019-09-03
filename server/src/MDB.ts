@@ -8,13 +8,16 @@ const dbName = 'quizzz-game';
 
 const client = new MongoClient(url);
 
-let MDB: Db;
+export let MDB: Db;
 
 let connect = (resolve: (db: Db) => void) => {
     client.connect(error => {
+        console.warn('[MDB]', 'connect');
         if (error) {
+            console.warn('[MDB]', 'error');
             setTimeout(() => connect(resolve), 500);
         } else {
+            console.warn('[MDB]', 'inited');
             resolve(client.db(dbName));
         }
     })
@@ -31,7 +34,8 @@ export let initMDB = async () => {
         return;
     }
     MDB = await getMDB();
+
+    // indexes
+    MDB.collection('sessionUsers').createIndex({ sid: 1, uid: 1 }, { unique: true });
+
 }
-
-export default MDB!;
-

@@ -14,6 +14,7 @@
     "@types/socket.io-client": "^1.4.32",
     "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
+    "glamorous": "^5.0.0",
     "mobile-detect": "^1.4.3",
     "mongodb": "^3.3.2",
     "react": "^16.9.0",
@@ -23,10 +24,13 @@
     "socket.io-client": "^2.2.0",
     "typescript": "3.6.2"
   },
+  "proxy": "http://localhost:5000",
   "scripts": {
-    "buildServer": "tsc --p server/src",
-    "startServer": "node server/dist/index.js",
-    "start": "buildServer && startServer & react-scripts start",
+    "startMongo": "mongod --config /usr/local/etc/mongod.conf",
+    "buildServer": "tsc --p server",
+    "startServer": "yarn buildServer && yarn build && node server/dist/index.js & yarn startMongo",
+    "dev": "yarn startServer & react-scripts start",
+    "props": "yarn buildServer && yarn startServer",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

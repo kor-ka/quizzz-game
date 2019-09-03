@@ -8,6 +8,8 @@ import * as socketIo from 'socket.io';
 import * as MobileDetect from 'mobile-detect';
 import { initMDB } from './MDB';
 import { createUser } from './user/User';
+import { createSession } from './Session';
+import { UserConnection } from './user/UserConnection';
 
 const notSoSoon = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365 * 1000);
 
@@ -32,43 +34,46 @@ app
   // })
 
 
-  .use(async (req, res) => {
+  .use(async (req, res, next) => {
     let md = new MobileDetect(req.headers['user-agent'] as string);
     res.cookie('isMobile', md.mobile() ? 'true' : 'false');
+    next();
   })
 
-  .use(async (req, res) => {
+  .use(async (req, res, next) => {
     await initMDB();
+    next();
   })
 
   // auth if not
-  .use(async (req, res) => {
+  .use(async (req, res, next) => {
     for (let k of Object.keys(req.cookies || {})) {
       if (k === 'quizzz-game-user') {
+        next();
         return;
       }
     }
     let u = await createUser();
     res.cookie('quizzz-game-user', `${u.id}:${u.token}`);
+    next();
   })
 
 
-  .get('/', (_, res) => {
+  .get('/', (req, res) => {
     res.redirect('/new');
   })
   .get('/new', async (req, res) => {
     let target = await createSession();
-    res.redirect('/' + target)
+    res.redirect('/' + target.insertedId.toHexString());
   })
-  .use(express.static(path.resolve(__dirname + '/../../public')))
-  .use('/build', express.static(__dirname + '/../../public/build'))
+  .use(express.static(path.resolve(__dirname + '/../../build')))
   .post('/test', async (req, res) => {
     console.log(req);
     console.log(req.body);
     console.log(req.headers);
   })
   .get('/:id', async (req, res) => {
-    res.sendFile(path.resolve(__dirname + '/../../public/index.html'));
+    res.sendFile(path.resolve(__dirname + '/../../build/index.html'));
   })
 
 //
@@ -80,10 +85,10 @@ let io = socketIo(server, { transports: ['websocket'] });
 
 io.on('connect', (socket) => {
   console.log('Connected client on port %s.', PORT);
-  let listener = new SocketListener(socket);
+  let listener = new UserConnection(socket);
 
   socket.on('disconnect', () => {
-    listener.dispose();
+    listener.close();
   });
 });
 

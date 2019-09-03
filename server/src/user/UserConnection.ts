@@ -15,12 +15,18 @@ export class UserConnection {
     }
 
     init = async () => {
-        for (let k of Object.keys(this.socket.request.cookies || {})) {
-            if (k === 'quizzz-game-user') {
-                let auth = this.socket.request.cookies[k];
+        console.warn(this.socket.request.headers.cookie);
+        for (let h of this.socket.request.headers.cookie.split('; ')) {
+            let cookie = decodeURIComponent(h);
+            console.warn(cookie);
+            if (cookie.startsWith('quizzz-game-user=')) {
+
+                let auth = cookie.replace('quizzz-game-user=', '');
                 if (typeof auth === 'string') {
+                    console.warn(auth);
                     let split = auth.split(':');
                     let user = await getUser(split[0], split[1]);
+                    console.warn(user);
                     if (user) {
                         this.user = user;
                     }
@@ -28,8 +34,8 @@ export class UserConnection {
                 }
             }
 
-            if (k === 'isMobile') {
-                this.isMobile = this.socket.request.cookies[k] === 'true';
+            if (cookie.startsWith('isMobile=')) {
+                this.isMobile = h === 'isMobile=true';
             }
         }
         if (!this.user) {
@@ -52,7 +58,7 @@ export class UserConnection {
             this.sessionWatcher = await getSessionWatcher(message.id);
         }
 
-        await handleMessage(this.user!._id, message);
+        await handleMessage(this.user!._id.toHexString(), message);
 
         if (this.sessionWatcher) {
             await this.sessionWatcher.handleMessage(message);
@@ -62,7 +68,7 @@ export class UserConnection {
 
     emit = (event: Event | Event[]) => {
         let events = Array.isArray(event) ? event : [event];
-        this.socket.emit(JSON.stringify({ batch: events }));
+        this.socket.emit('event', JSON.stringify({ batch: events }));
     }
 
     close = () => {

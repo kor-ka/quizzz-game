@@ -1,26 +1,17 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { Session } from './model/Session';
+import { SessionComponent } from './components/Sesssion';
+
+export let SessionContext = React.createContext<Session | undefined>(undefined);
 
 const App: React.FC = () => {
   let id = window.location.pathname.split('/').filter(s => s.length)[0];
+  let session = new Session(id);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <SessionContext.Provider value={session}>
+      <SessionComponent />
+    </SessionContext.Provider>
   );
 }
 

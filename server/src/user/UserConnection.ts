@@ -4,6 +4,7 @@ import { Event } from '../entity/events';
 import { Message } from '../entity/messages';
 import { SessionWatcher, getSessionWatcher } from '../session/SesionWatcher';
 import { handleMessage as sessionHandleMessage } from '../session/Session';
+import { gameHandleMessage } from '../game/Game';
 
 export class UserConnection {
     socket: Socket
@@ -72,6 +73,7 @@ export class UserConnection {
         // some actions
         await userHandeMessage(this.user!._id.toHexString(), message);
         await sessionHandleMessage(message);
+        await gameHandleMessage(this.user!._id.toHexString(), message);
     }
 
     emit = (event: Event | Event[]) => {

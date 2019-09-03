@@ -42,7 +42,7 @@ export class SessionWatcher {
         this.sessionWatcher.on('change', async (next: MDBChangeOp<Session>) => {
             console.log('[SessionWatcher]', 'change', next);
             if (next.operationType === 'update') {
-                this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl });
+                this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl, gid: session.gameId && session.gameId.toHexString() });
 
                 if (this.gameWatcher && (!next.fullDocument.gameId || !this.gameWatcher.id.equals(next.fullDocument.gameId))) {
                     this.gameWatcher.dispose();
@@ -100,7 +100,7 @@ export class SessionWatcher {
 
         // session
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
-        batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state, ttl: session!.stateTtl })
+        batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state, ttl: session!.stateTtl, gid: session.gameId && session.gameId.toHexString() })
 
         if (this.gameWatcher) {
             batch.push(...await this.gameWatcher.getFullState())

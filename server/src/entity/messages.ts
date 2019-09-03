@@ -1,4 +1,4 @@
-export type Message = SessionInit | UserRename | SessionStartGameCountdown | SessionStopGameCountdown | SessionReset;
+export type Message = SessionInit | UserRename | SessionStartGameCountdown | SessionStopGameCountdown | SessionReset | Answer;
 
 // Session
 export interface SessionInit {
@@ -21,8 +21,16 @@ export interface SessionReset {
     id: string;
 }
 
-// Session
+// User
 export interface UserRename {
     type: 'UserRename';
     name: string;
+}
+
+// Game
+export interface Answer {
+    type: 'Answer';
+    gid: string;
+    qid: string;
+    answer: string;
 }

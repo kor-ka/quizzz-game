@@ -24,6 +24,7 @@ export interface SessionStateChangedEvent {
     sessionId: string;
     state: SessionState;
     ttl?: number;
+    gid?: string;
 }
 
 // User

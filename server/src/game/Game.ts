@@ -1,6 +1,7 @@
 import { ObjectId } from "bson";
 import { MDB } from "../MDB";
 import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
+import { Message } from "../entity/messages";
 
 export type GameState = 'question' | 'subResults' | 'results';
 
@@ -47,7 +48,7 @@ export interface ClientQuestion {
     _id: string;
     category: string;
     text: string;
-    textAnswers: string[];
+    textAnswers?: string[];
     open?: 'text' | 'number';
 }
 
@@ -119,9 +120,17 @@ export const moveToState = async (args: GameChangeState) => {
 
         // reset session state
         let game = await GAME().findOne({ _id: args.gid });
-        await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', sid: game.sid, to: 'await', ttl: stateTtl })
+        if (game) {
+            await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', sid: game.sid, to: 'await', ttl: stateTtl })
+        }
     }
 
+}
+
+export const gameHandleMessage = async (uid: string, message: Message) => {
+    if (message.type === 'Answer') {
+        await answer(uid, message.qid, message.gid, message.answer);
+    }
 }
 
 export const answer = async (uid: string, qid: string, gid: string, answer: string) => {
@@ -129,5 +138,7 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
     let g = new ObjectId(gid);
     let q = new ObjectId(qid);
     let game = await GAME().findOne({ _id: g });
-    await GAME_USER_ANSWER().insertOne({ gid: g, qid: q, uid: u, answer, points: game.qid.equals(q) ? 1 : 0 });
+    if (game) {
+        await GAME_USER_ANSWER().insertOne({ gid: g, qid: q, uid: u, answer, points: game.qid.equals(q) ? 1 : 0 });
+    }
 }

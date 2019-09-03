@@ -4,6 +4,7 @@ import { ClientUser } from '../../server/src/user/User';
 import { SessionState } from '../../server/src/session/Session';
 import * as Cookie from 'js-cookie';
 import { Event } from '../../server/src/entity/events';
+import { GameModel } from './GameModel';
 export const endpoint = window.location.hostname.indexOf('localhost') >= 0 ? 'http://localhost:5000' : '';
 
 class Emitter {
@@ -20,8 +21,8 @@ export class SessionModel {
     id: string;
     io: Emitter;
 
-    users: ClientUser[] = [];
-    usersListeners = new Set<(users: ClientUser[]) => void>();
+    users = new Map<string, ClientUser>();
+    usersListeners = new Set<(users: Map<string, ClientUser>) => void>();
 
     sesssionState: { state: SessionState | 'connecting', ttl: number } = { state: 'connecting', ttl: 0 };
     sesssionStateListeners = new Set<(sessionState: { state: SessionState | 'connecting', ttl: number }) => void>();
@@ -30,6 +31,7 @@ export class SessionModel {
     me?: ClientUser;
     meListeners = new Set<(me: ClientUser) => void>();
 
+    game = new GameModel(this);
 
     constructor(id: string) {
         this.id = id;
@@ -59,37 +61,38 @@ export class SessionModel {
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         console.log('[event]', event);
         if (event.type === 'UserUpdatedEvent') {
-            this.users = this.users.map(u => u._id === event.user._id ? event.user : u);
+            this.users.set(event.user._id, event.user);
             notifyers.add(this.notifyUser);
             if (event.user._id === this.myId) {
                 this.me = event.user;
                 notifyers.add(this.notifyMeUser);
             }
         } else if (event.type === 'SessionUserJoinedEvent') {
-            if (!this.users.find(u => u._id === event.user._id)) {
-                this.users.push(event.user);
-                if (event.user._id === this.myId) {
-                    this.me = event.user;
-                }
+            this.users.set(event.user._id, event.user);
+            if (event.user._id === this.myId) {
+                this.me = event.user;
                 notifyers.add(this.notifyMeUser);
             }
             notifyers.add(this.notifyUser);
         } else if (event.type === 'SessionUserLeftEvent') {
-            this.users = this.users.filter(u => u._id !== event.user._id)
+            this.users.delete(event.user._id);
             notifyers.add(this.notifyUser);
         } else if (event.type === 'SessionStateChangedEvent') {
             this.sesssionState = { state: event.state, ttl: event.ttl || 0 };
+            this.game.id = event.gid;
             notifyers.add(this.notifyState);
         }
+
+        this.game.handleEvent(event, notifyers);
     }
 
     ////
     // io
     ////
 
-    subscribeUsers = (listener: (users: ClientUser[]) => void) => {
+    subscribeUsers = (listener: (users: Map<string, ClientUser>) => void) => {
         this.usersListeners.add(listener);
-        listener([...this.users]);
+        listener(this.users);
         return () => {
             this.usersListeners.delete(listener);
         }
@@ -112,7 +115,7 @@ export class SessionModel {
     }
 
     notifyUser = () => {
-        this.usersListeners.forEach(l => l([...this.users]));
+        this.usersListeners.forEach(l => l(this.users));
         console.log('[session]', 'new users', this.users);
 
     }

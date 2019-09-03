@@ -9,24 +9,33 @@ export class UserConnection {
     user?: User;
     isMobile?: boolean;
     sessionWatcher?: SessionWatcher;
+    inited = false;
+    messages: Message[] = [];
     constructor(socket: Socket) {
         this.socket = socket;
+
+        this.socket.on('message', async (m: string) => {
+            console.log('[server](message): %s', m);
+            if (!m) {
+                return;
+            }
+            let message = JSON.parse(m) as Message
+            this.handleMessage(message);
+
+        });
+
         this.init();
     }
 
     init = async () => {
-        console.warn(this.socket.request.headers.cookie);
         for (let h of this.socket.request.headers.cookie.split('; ')) {
             let cookie = decodeURIComponent(h);
-            console.warn(cookie);
             if (cookie.startsWith('quizzz-game-user=')) {
 
                 let auth = cookie.replace('quizzz-game-user=', '');
                 if (typeof auth === 'string') {
-                    console.warn(auth);
                     let split = auth.split(':');
                     let user = await getUser(split[0], split[1]);
-                    console.warn(user);
                     if (user) {
                         this.user = user;
                     }
@@ -41,21 +50,18 @@ export class UserConnection {
         if (!this.user) {
             this.socket.disconnect();
         }
-
-        this.socket.on('message', async (m: string) => {
-            console.log('[server](message): %s', m);
-            if (!m) {
-                return;
-            }
-            let message = JSON.parse(m) as Message
-            this.handleMessage(message);
-
-        });
+        this.inited = true;
+        this.messages.forEach(this.handleMessage);
     }
 
     handleMessage = async (message: Message) => {
+        if (!this.inited) {
+            this.messages.push(message);
+            return;
+        }
         if (message.type === 'InitSession') {
             this.sessionWatcher = await getSessionWatcher(message.id);
+            this.sessionWatcher.addUserConnection(this);
         }
 
         await handleMessage(this.user!._id.toHexString(), message);
@@ -74,7 +80,7 @@ export class UserConnection {
     close = () => {
         this.socket.disconnect();
         if (this.sessionWatcher) {
-            this.sessionWatcher.dispose();
+            this.sessionWatcher.removeUserConnection(this);
         }
     }
 }

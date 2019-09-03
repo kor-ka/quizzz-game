@@ -1,7 +1,8 @@
 import { MongoClient, Db } from 'mongodb';
 
+
 // Connection URL
-const url = 'mongodb://heroku_6b7qf6gd:t7n4orhupolbp12cp0rdeg5vle@ds215338.mlab.com:15338/heroku_6b7qf6gd';
+const url = process.env.MONGODB_URI || require('../../secret.json').mdbUrl;
 
 // Database Name
 const dbName = 'quizzz-game';
@@ -12,9 +13,9 @@ export let MDB: Db;
 
 let connect = (resolve: (db: Db) => void) => {
     client.connect(error => {
-        console.warn('[MDB]', 'connect');
+        console.warn('[MDB]', 'connect', url);
         if (error) {
-            console.warn('[MDB]', 'error');
+            console.warn('[MDB]', error);
             setTimeout(() => connect(resolve), 500);
         } else {
             console.warn('[MDB]', 'inited');

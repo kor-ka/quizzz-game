@@ -7,7 +7,7 @@ import { createServer } from 'http';
 import * as socketIo from 'socket.io';
 import * as MobileDetect from 'mobile-detect';
 import { initMDB } from './MDB';
-import { createUser } from './user/User';
+import { createUser, getUser } from './user/User';
 import { createSession } from './Session';
 import { UserConnection } from './user/UserConnection';
 
@@ -41,7 +41,9 @@ app
   })
 
   .use(async (req, res, next) => {
+    console.warn('here')
     await initMDB();
+    console.warn('here2')
     next();
   })
 
@@ -49,8 +51,11 @@ app
   .use(async (req, res, next) => {
     for (let k of Object.keys(req.cookies || {})) {
       if (k === 'quizzz-game-user') {
-        next();
-        return;
+        let auth = req.cookies[k].split(':');
+        if (await getUser(auth[0], auth[1])) {
+          next();
+          return;
+        }
       }
     }
     let u = await createUser();
@@ -83,7 +88,8 @@ app
 let server = createServer(app);
 let io = socketIo(server, { transports: ['websocket'] });
 
-io.on('connect', (socket) => {
+io.on('connect', async (socket) => {
+  await initMDB();
   console.log('Connected client on port %s.', PORT);
   let listener = new UserConnection(socket);
 

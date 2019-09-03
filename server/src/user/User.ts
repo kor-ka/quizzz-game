@@ -26,7 +26,7 @@ export let createUser = async () => {
     return { id: u.insertedId.toHexString(), token };
 }
 
-export let getUser = async (id: string, token?: string) => {
+export let getUser = (id: string, token?: string) => {
     return USERS().findOne({ _id: new ObjectId(id), ...(token !== undefined ? { token } : {}) });
 }
 

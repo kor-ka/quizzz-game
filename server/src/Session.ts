@@ -21,6 +21,8 @@ export interface SessionUser {
     _id: ObjectId;
     sid: string;
     uid: string;
+    online: boolean;
+    visible: boolean;
     topScore?: number;
 }
 
@@ -58,9 +60,12 @@ export class SessionWatcher {
     init = async () => {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
 
+        console.log('[SessionWatcher]', 'init', session);
+
         // subscribe for updates
-        this.sessionWatcher = SESSIONS().watch([{ $match: { _id: this.id } }], { fullDocument: 'updateLookup' });
+        this.sessionWatcher = SESSIONS().watch([{ $match: { 'fullDocument._id': new ObjectId(this.id) } }], { fullDocument: 'updateLookup' });
         this.sessionWatcher.on('change', async (next: MDBChangeOp<Session>) => {
+            console.log('[SessionWatcher]', 'change', next);
             if (next.operationType === 'update') {
                 this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl });
             }
@@ -72,26 +77,26 @@ export class SessionWatcher {
 
 
         // detect user list changes
-        this.sessionUsersWatcher = SESSION_USER().watch([{ $match: { sid: this.id } }], { fullDocument: 'updateLookup' });
+        this.sessionUsersWatcher = SESSION_USER().watch([{ $match: { 'fullDocument.sid': this.id } }], { fullDocument: 'updateLookup' });
         this.sessionUsersWatcher.on('change', async (next: MDBChangeOp<SessionUser>) => {
             let user = await getUser(next.fullDocument.uid);
-            if (next.operationType === 'insert') {
-                if (user) {
+            if (user && (next.operationType === 'insert' || next.operationType === 'update')) {
+                let active = next.fullDocument.online && next.fullDocument.visible;
+                if (active) {
                     this.emitAll({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });
-                }
-                this.watchUser(next.fullDocument);
-            } else if (next.operationType === 'delete') {
-                if (user) {
+                    this.watchUser(next.fullDocument);
+                } else {
                     this.emitAll({ type: 'SessionUserLeftEvent', sessionId: this.id, user: toClient(user) });
-                }
-                let w = this.userWatchers.get(next.fullDocument._id.toHexString());
-                if (w) {
-                    await w.close();
-                    this.userWatchers.delete(next.fullDocument._id.toHexString());
+                    let w = this.userWatchers.get(next.fullDocument._id.toHexString());
+                    if (w) {
+                        await w.close();
+                        this.userWatchers.delete(next.fullDocument._id.toHexString());
+                    }
                 }
             }
         });
 
+        console.log('[SessionWatcher]', 'inited');
     }
 
     ////
@@ -109,7 +114,7 @@ export class SessionWatcher {
     startCountdown = async () => {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         if (session && session.state === 'await') {
-            await SESSIONS().updateOne({ _id: session._id }, { $set: { state: 'countdown' } });
+            await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown' } });
         }
 
     }
@@ -117,7 +122,7 @@ export class SessionWatcher {
     stopCountDown = async () => {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         if (session && session.state === 'countdown') {
-            await SESSIONS().updateOne({ _id: session._id }, { $set: { state: 'await' } });
+            await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await' } });
         }
     }
 
@@ -125,22 +130,18 @@ export class SessionWatcher {
     addUserConnection = async (connection: UserConnection) => {
         // update user session state
         this.connections.add(connection);
-        if (connection.isMobile) {
-            await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { isMobile: !!connection.isMobile } }, { upsert: true });
-        } else {
-            await SESSION_USER().deleteOne({ uid: connection.user!._id.toHexString(), sid: this.id });
-        }
+        await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { visible: !!connection.isMobile, online: true } }, { upsert: true });
 
         // notify user about current state
-        let sessionUsers = await SESSION_USER().find({ sid: this.id, isMobile: true });
+        let sessionUsers = await SESSION_USER().find({ sid: this.id, isMobile: true, online: true });
 
         let batch: Event[] = [];
-        sessionUsers.map(async su => {
+        for (let su of await sessionUsers.toArray()) {
             let user = await getUser(su.uid);
             if (user) {
                 batch.push({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });
             }
-        });
+        }
 
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state })
@@ -157,7 +158,7 @@ export class SessionWatcher {
             this.dispose();
             sessionWatchers.delete(this.id);
         }
-        SESSION_USER().deleteOne({ uid: connection.user!._id.toHexString() });
+        SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { online: false } });
     }
 
     ////
@@ -170,7 +171,7 @@ export class SessionWatcher {
     }
 
     watchUser = (user: SessionUser) => {
-        let watcher = USERS().watch([{ $match: { _id: user._id } }], { fullDocument: 'updateLookup' });
+        let watcher = USERS().watch([{ $match: { 'fullDocument._id': new ObjectId(user.uid) } }], { fullDocument: 'updateLookup' });
         this.userWatchers.set(user._id.toHexString(), watcher);
 
         watcher.on('change', async (next: MDBChangeOp<User>) => {

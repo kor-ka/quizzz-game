@@ -26,9 +26,8 @@
   },
   "proxy": "http://localhost:5000",
   "scripts": {
-    "startMongo": "mongod --config /usr/local/etc/mongod.conf",
     "buildServer": "tsc --p server",
-    "startServer": "yarn buildServer && yarn build && node server/dist/index.js & yarn startMongo",
+    "startServer": "yarn buildServer && yarn build && node server/dist/index.js",
     "dev": "yarn startServer & react-scripts start",
     "props": "yarn buildServer && yarn startServer",
     "build": "react-scripts build",

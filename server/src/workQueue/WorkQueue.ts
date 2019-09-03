@@ -15,6 +15,7 @@ interface WorkBase {
 export interface SessionChangeState extends WorkBase {
     type: 'SessionChangeState';
     sid: ObjectId;
+    gid?: ObjectId;
     to: SessionState;
 }
 

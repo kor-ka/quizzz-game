@@ -4,7 +4,7 @@ import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQue
 
 export type GameState = 'question' | 'subResults' | 'results';
 
-interface Game {
+export interface Game {
     _id: ObjectId;
     sid: ObjectId;
     state: GameState;
@@ -35,10 +35,30 @@ interface GameUserAnswer {
     points: number;
 }
 
-interface GameUserScore {
+export interface GameUserScore {
     gid: ObjectId;
     uid: ObjectId;
     points: number;
+}
+
+// client shit
+
+export interface ClientQuestion {
+    _id: string;
+    category: string;
+    text: string;
+    textAnswers: string[];
+    open?: 'text' | 'number';
+}
+
+export const toClientQuestion = (question: Question): ClientQuestion => {
+    return {
+        _id: question._id.toHexString(),
+        category: question.category,
+        text: question.text,
+        textAnswers: question.textAnswers,
+        open: question.open
+    }
 }
 
 export let GAME = () => MDB.collection<Game>('games');

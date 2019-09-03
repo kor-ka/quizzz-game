@@ -1,5 +1,5 @@
 import { UserConnection } from "../user/UserConnection";
-import { GameWatcher } from "../game/GameWatcher";
+import { GameWatcher, getGameWatcher } from "../game/GameWatcher";
 import { ChangeStream, ObjectId } from "mongodb";
 import { MDBChangeOp } from "../utils/MDBChangeOp";
 import { USERS, User, getUser, toClient } from "../user/User";
@@ -43,6 +43,13 @@ export class SessionWatcher {
             console.log('[SessionWatcher]', 'change', next);
             if (next.operationType === 'update') {
                 this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl });
+
+                if (this.gameWatcher && (!next.fullDocument.gameId || !this.gameWatcher.id.equals(next.fullDocument.gameId))) {
+                    this.gameWatcher.dispose();
+                }
+                if (next.fullDocument.gameId && (!this.gameWatcher || !this.gameWatcher.id.equals(next.fullDocument.gameId))) {
+                    this.gameWatcher = await getGameWatcher(next.fullDocument.gameId, this);
+                }
             }
         });
 
@@ -95,8 +102,9 @@ export class SessionWatcher {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state, ttl: session!.stateTtl })
 
-        // TODO: add game state
-
+        if (this.gameWatcher) {
+            batch.push(...await this.gameWatcher.getFullState())
+        }
         connection.emit(batch);
 
     }
@@ -139,5 +147,9 @@ export class SessionWatcher {
             this.sessionUsersWatcher.close();
         }
         this.userWatchers.forEach(w => w.close());
+
+        if (this.gameWatcher) {
+            this.gameWatcher.dispose();
+        }
     }
 }

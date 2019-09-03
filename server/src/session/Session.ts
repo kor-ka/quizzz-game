@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { Message } from "../entity/messages";
 import { MDB } from "../MDB";
 import { SessionChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
+import { startGame } from "../game/Game";
 
 export type SessionState = 'await' | 'countdown' | 'game' | 'score'
 export let SESSIONS = () => MDB.collection<Session>('sessions');
@@ -10,7 +11,7 @@ export interface Session {
     _id: ObjectId;
     state: SessionState;
     stateTtl?: number;
-    gameId?: string;
+    gameId?: ObjectId;
 }
 
 export interface SessionUser {
@@ -30,6 +31,8 @@ export let handleMessage = async (message: Message) => {
         await startCountdown(message.id)
     } else if (message.type === 'SessionStopGameCountdown') {
         await stopCountDown(message.id);
+    } else if (message.type === 'SessionReset') {
+        await reset(message.id);
     }
 }
 
@@ -38,7 +41,8 @@ let startCountdown = async (sessionId: string) => {
     if (session && session.state === 'await') {
         let ttl = new Date().getTime() + 10000;
         await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl } });
-        await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new ObjectId(sessionId), to: 'game' });
+        let gid = await startGame(session._id);
+        await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new ObjectId(sessionId), to: 'game', gid });
     }
 
 }
@@ -51,8 +55,13 @@ let stopCountDown = async (sessionId: string) => {
     }
 }
 
+let reset = async (sessionId: string) => {
+    await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', sid: new ObjectId(sessionId) })
+    await SESSIONS().updateOne({ _id: new ObjectId(sessionId) }, { $set: { state: 'await', stateTtl: 0 } });
+}
+
 export let moveToState = async (to: SessionChangeState) => {
-    await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0 } });
+    await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
 }
 
 

@@ -1,8 +1,8 @@
 import { ClientUser } from "../user/User";
-import { GameState } from "../Game";
+import { GameState, ClientQuestion } from "../game/Game";
 import { SessionState } from "../session/Session";
 
-export type Event = SessionUserJoinedEvent | SessionUserLeftEvent | SessionStateChangedEvent | UserUpdatedEvent | GameStateChangedEvent | GameScoreChangedEvent;
+export type Event = SessionUserJoinedEvent | SessionUserLeftEvent | SessionStateChangedEvent | UserUpdatedEvent | GameStateChangedEvent | GameScoreChangedEvent | GameUserGaveAnswer;
 
 
 
@@ -37,13 +37,17 @@ export interface GameStateChangedEvent {
     type: 'GameStateChangedEvent';
     state: GameState;
     ttl?: number;
+    question: ClientQuestion
+}
+
+export interface GameUserGaveAnswer {
+    type: 'GameUserGaveAnswer';
+    qid: string;
+    uid: string;
 }
 
 export interface GameScoreChangedEvent {
     type: 'GameScoreChangedEvent';
-    scores:
-    {
-        uid: string;
-        score: number;
-    }[];
+    uid: string;
+    score: number;
 }

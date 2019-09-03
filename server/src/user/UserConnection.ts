@@ -1,8 +1,9 @@
 import { Socket } from 'socket.io'
-import { User, getUser, handleMessage } from './User';
+import { User, getUser, handleMessage as userHandeMessage } from './User';
 import { Event } from '../entity/events';
 import { Message } from '../entity/messages';
-import { SessionWatcher, getSessionWatcher } from '../Session';
+import { SessionWatcher, getSessionWatcher } from '../session/SesionWatcher';
+import { handleMessage as sessionHandleMessage } from '../session/Session';
 
 export class UserConnection {
     socket: Socket
@@ -64,12 +65,8 @@ export class UserConnection {
             this.sessionWatcher.addUserConnection(this);
         }
 
-        await handleMessage(this.user!._id.toHexString(), message);
-
-        if (this.sessionWatcher) {
-            await this.sessionWatcher.handleMessage(message);
-        }
-
+        await userHandeMessage(this.user!._id.toHexString(), message);
+        await sessionHandleMessage(message);
     }
 
     emit = (event: Event | Event[]) => {

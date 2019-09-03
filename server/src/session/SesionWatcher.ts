@@ -1,34 +1,11 @@
-import { UserConnection } from "./user/UserConnection";
-import { GameWatcher } from "./Game";
+import { UserConnection } from "../user/UserConnection";
+import { GameWatcher } from "../Game";
 import { ChangeStream, ObjectId } from "mongodb";
-import { MDBChangeOp } from "./utils/MDBChangeOp";
-import { USERS, User, getUser, toClient } from "./user/User";
-import { Event } from "./entity/events";
-import { Message } from "./entity/messages";
-import { MDB } from "./MDB";
-
-export type SessionState = 'await' | 'countdown' | 'game' | 'score'
-export let SESSIONS = () => MDB.collection<Session>('sessions');
-export let SESSION_USER = () => MDB.collection<SessionUser>('sessionUsers');
-export interface Session {
-    _id: ObjectId;
-    state: SessionState;
-    stateTtl?: number;
-    gameId?: string;
-}
-
-export interface SessionUser {
-    _id: ObjectId;
-    sid: string;
-    uid: string;
-    online: boolean;
-    visible: boolean;
-    topScore?: number;
-}
-
-export let createSession = async () => {
-    return await SESSIONS().insertOne({ state: 'await' });
-}
+import { MDBChangeOp } from "../utils/MDBChangeOp";
+import { USERS, User, getUser, toClient } from "../user/User";
+import { Event } from "../entity/events";
+import { Message } from "../entity/messages";
+import { SESSIONS, SESSION_USER, Session, SessionUser } from "./Session";
 
 let sessionWatchers = new Map<string, SessionWatcher>();
 
@@ -41,8 +18,6 @@ export let getSessionWatcher = async (id: string) => {
     }
     return res;
 }
-
-
 
 export class SessionWatcher {
     sessionWatcher?: ChangeStream;
@@ -98,34 +73,6 @@ export class SessionWatcher {
 
         console.log('[SessionWatcher]', 'inited');
     }
-
-    ////
-    // User io
-    ////
-
-    handleMessage = async (message: Message) => {
-        if (message.type === 'SessionStartGameCountdown') {
-            await this.startCountdown()
-        } else if (message.type === 'SessionStopGameCountdown') {
-            await this.stopCountDown();
-        }
-    }
-
-    startCountdown = async () => {
-        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
-        if (session && session.state === 'await') {
-            await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown' } });
-        }
-
-    }
-
-    stopCountDown = async () => {
-        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
-        if (session && session.state === 'countdown') {
-            await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await' } });
-        }
-    }
-
 
     addUserConnection = async (connection: UserConnection) => {
         // update user session state

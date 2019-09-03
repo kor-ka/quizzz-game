@@ -1,5 +1,5 @@
 import { UserConnection } from "../user/UserConnection";
-import { GameWatcher } from "../Game";
+import { GameWatcher } from "../game/GameWatcher";
 import { ChangeStream, ObjectId } from "mongodb";
 import { MDBChangeOp } from "../utils/MDBChangeOp";
 import { USERS, User, getUser, toClient } from "../user/User";
@@ -80,6 +80,7 @@ export class SessionWatcher {
         await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { visible: !!connection.isMobile, online: true } }, { upsert: true });
 
         // notify user about current state
+        // users
         let sessionUsers = await SESSION_USER().find({ sid: this.id, isMobile: true, online: true });
 
         let batch: Event[] = [];
@@ -90,8 +91,9 @@ export class SessionWatcher {
             }
         }
 
+        // session
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
-        batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state })
+        batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state, ttl: session!.stateTtl })
 
         // TODO: add game state
 

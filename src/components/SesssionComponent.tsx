@@ -13,6 +13,7 @@ export const SessionComponent = () => {
 
 export const SessionStateComponent = () => {
     let [state, setState] = React.useState<{ state: SessionState | 'connecting', ttl: number }>({ state: 'connecting', ttl: 0 });
+    let [timeout, setTimeout] = React.useState(0);
     let [loading, setLoading] = React.useState(false);
     let session = React.useContext(SessionContext);
     React.useEffect(() => {
@@ -22,6 +23,16 @@ export const SessionStateComponent = () => {
         });
         return dispose;
     }, [session]);
+
+    React.useEffect(() => {
+        let interval = setInterval(() => {
+            let left = state.ttl - new Date().getTime();
+            setTimeout(left);
+            if (left <= 0) {
+                clearInterval(interval);
+            }
+        }, 100);
+    }, [state.ttl]);
 
     let startStop = React.useCallback(() => {
         setLoading(true);
@@ -34,8 +45,11 @@ export const SessionStateComponent = () => {
 
     return <>
         {JSON.stringify(state)}
-        <Profile />
+        {state.state === 'countdown' && <div>
+            {state.ttl - new Date().getTime()}
+        </div>}
         {(state.state === 'await' || state.state === 'countdown') && <Button onClick={startStop} style={{ opacity: loading ? 0.5 : 1 }} >{state.state === 'await' ? 'start' : 'stop'}</Button>}
+        <Profile />
     </>
 }
 

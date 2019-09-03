@@ -39,4 +39,9 @@ export let initMDB = async () => {
     // indexes
     MDB.collection('sessionUsers').createIndex({ sid: 1, uid: 1 }, { unique: true });
 
+    MDB.collection('game_questions').createIndex({ qid: 1, gid: 1 }, { unique: true });
+    MDB.collection('game_user_answer').createIndex({ qid: 1, gid: 1, uid: 1 }, { unique: true });
+    MDB.collection('game_user_score').createIndex({ gid: 1, uid: 1 }, { unique: true });
+    // MDB.collection('work_queue').createIndex({ ttl: 1 });
+
 }

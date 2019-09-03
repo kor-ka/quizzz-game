@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Message } from "../entity/messages";
 import { MDB } from "../MDB";
+import { SessionChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
 
 export type SessionState = 'await' | 'countdown' | 'game' | 'score'
 export let SESSIONS = () => MDB.collection<Session>('sessions');
@@ -35,7 +36,9 @@ export let handleMessage = async (message: Message) => {
 let startCountdown = async (sessionId: string) => {
     let session = await SESSIONS().findOne({ _id: new ObjectId(sessionId) });
     if (session && session.state === 'await') {
-        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown' } });
+        let ttl = new Date().getTime() + 10000;
+        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl } });
+        await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new ObjectId(sessionId), to: 'game' });
     }
 
 }
@@ -43,8 +46,13 @@ let startCountdown = async (sessionId: string) => {
 let stopCountDown = async (sessionId: string) => {
     let session = await SESSIONS().findOne({ _id: new ObjectId(sessionId) });
     if (session && session.state === 'countdown') {
-        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await' } });
+        await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', to: 'game', sid: new ObjectId(sessionId) })
+        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await', stateTtl: 0 } });
     }
+}
+
+export let moveToState = async (to: SessionChangeState) => {
+    await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0 } });
 }
 
 

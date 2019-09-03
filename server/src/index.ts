@@ -10,6 +10,7 @@ import { initMDB } from './MDB';
 import { createUser, getUser } from './user/User';
 import { createSession } from './session/Session';
 import { UserConnection } from './user/UserConnection';
+import { startWorker } from './workQueue/WorkQueue';
 
 const notSoSoon = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365 * 1000);
 
@@ -90,6 +91,7 @@ let io = socketIo(server, { transports: ['websocket'] });
 
 io.on('connect', async (socket) => {
   await initMDB();
+  startWorker();
   console.log('Connected client on port %s.', PORT);
   let listener = new UserConnection(socket);
 

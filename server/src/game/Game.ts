@@ -23,10 +23,11 @@ interface Question {
     answer: string;
 }
 
-interface GameQuestion {
+export interface GameQuestion {
     _id: ObjectId;
     qid: ObjectId;
     gid: ObjectId;
+    categoty: string;
     completed: boolean;
 }
 
@@ -83,7 +84,7 @@ export const startGame = async (sid: ObjectId) => {
     let gid = (await GAME().insertOne({ state: 'question', stateTtl: ttl, qid, sid })).insertedId;
     console.log("START GAME", gid);
     try {
-        await GAME_QUESTION().insertMany(questions.map(q => ({ qid: q._id, gid, completed: false })), { ordered: false });
+        await GAME_QUESTION().insertMany(questions.map(q => ({ qid: q._id, gid, completed: false, categoty: q.category })), { ordered: false });
     } catch (e) {
         // ignore duplicates
         // console.warn(e);

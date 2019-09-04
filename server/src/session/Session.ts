@@ -4,7 +4,7 @@ import { MDB } from "../MDB";
 import { SessionChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
 import { startGame } from "../game/Game";
 
-export type SessionState = 'await' | 'countdown' | 'game' | 'score'
+export type SessionState = 'await' | 'countdown' | 'game'
 export let SESSIONS = () => MDB.collection<Session>('sessions');
 export let SESSION_USER = () => MDB.collection<SessionUser>('sessionUsers');
 export interface Session {

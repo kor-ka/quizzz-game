@@ -1,5 +1,5 @@
 import { SessionWatcher } from "../session/SesionWatcher";
-import { GAME, Game, QUESTION, toClientQuestion, GAME_USER_SCORE, GameUserScore } from "./Game";
+import { GAME, Game, QUESTION, toClientQuestion, GAME_USER_SCORE, GameUserScore, GAME_QUESTION, GameQuestion } from "./Game";
 import { ObjectId } from "bson";
 import { ChangeStream } from "mongodb";
 import { MDBChangeOp } from "../utils/MDBChangeOp";
@@ -22,7 +22,8 @@ export class GameWatcher {
         this.gameWatcher.on('change', async (next: MDBChangeOp<Game>) => {
             if (next.operationType === 'update') {
                 let question = await QUESTION().findOne({ _id: next.fullDocument.qid });
-                this.session.emitAll({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question) })
+                let questions = (await GAME_QUESTION().find({ gid: next.fullDocument._id, completed: false }).toArray()).map(q => ({ qid: q._id.toHexString(), category: q.categoty }));
+                this.session.emitAll({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question), stack: questions })
             }
         })
 
@@ -39,10 +40,11 @@ export class GameWatcher {
     getFullState = async () => {
         let game = await GAME().findOne({ _id: this.id });
         let question = await QUESTION().findOne({ _id: game.qid });
+        let questions = (await GAME_QUESTION().find({ gid: this.id, completed: false }).toArray()).map(q => ({ qid: q._id.toHexString(), category: q.categoty }));
         let scores = await GAME_USER_SCORE().find({ gid: this.id }).toArray();
         let batch: Event[] = [];
 
-        batch.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: game.state, ttl: game.stateTtl, question: question && toClientQuestion(question) })
+        batch.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: game.state, ttl: game.stateTtl, question: question && toClientQuestion(question), stack: questions })
         for (let score of scores) {
             batch.push({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points });
         }

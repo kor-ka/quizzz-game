@@ -39,7 +39,8 @@ export interface GameStateChangedEvent {
     type: 'GameStateChangedEvent';
     state: GameState;
     ttl?: number;
-    question: ClientQuestion
+    question?: ClientQuestion;
+    stack: { qid: string, category: string; }[];
 }
 
 export interface GameUserGaveAnswer {

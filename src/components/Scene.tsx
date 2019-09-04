@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom";
 import * as THREE from 'three';
 export const isChromium = (window as any).chrome;
 
-export const SceneContext = React.createContext<{ scene?: THREE.Scene, cam?: THREE.PerspectiveCamera }>({});
+export const SceneContext = React.createContext<{ scene?: THREE.Scene, cam?: THREE.PerspectiveCamera, subscribeTicks: (listener: () => void) => () => void }>({ subscribeTicks: () => () => { } });
 
 export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: THREE.PerspectiveCamera }> {
     ref = React.createRef<HTMLDivElement>();
@@ -11,11 +11,21 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
     cam?: THREE.PerspectiveCamera;
     renderer?: THREE.WebGLRenderer;
     frameId?: number;
-    minSceneCamZ = 5000;
+    minSceneCamZ = 500;
+
+    tickListeners = new Set<() => void>();
     constructor(props: any) {
         super(props);
         this.state = {};
     }
+
+    subscribeTicks = (listener: () => void) => {
+        this.tickListeners.add(listener);
+        return () => {
+            this.tickListeners.delete(listener);
+        }
+    }
+
     componentDidMount() {
 
         if (this.ref.current) {
@@ -33,8 +43,16 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
                 Number.MAX_SAFE_INTEGER
             )
             this.cam.position.z = this.minSceneCamZ;
-            this.cam.position.x = 0;
-            this.cam.position.y = 0;
+            // this.cam.position.x = -500;
+            // this.cam.position.y = -500;
+
+            const color = 0xFFFFFF;
+            const intensity = 1;
+            const light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(0, 10, 400);
+            light.target.position.set(5, 500, 200);
+            this.scene.add(light);
+            this.scene.add(light.target);
 
             //ADD RENDERER
             this.renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -42,7 +60,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
             this.renderer.setSize(width, height)
             e.appendChild(this.renderer.domElement)
 
-            var gridHelper = new THREE.GridHelper(1000000, 1000);
+            var gridHelper = new THREE.GridHelper(100000, 1000);
             gridHelper.rotateX(1.5708);
             this.scene.add(gridHelper);
             this.start()
@@ -74,7 +92,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
     }
     render() {
         return (
-            <SceneContext.Provider value={{ scene: this.state.scene, cam: this.state.cam }}>
+            <SceneContext.Provider value={{ scene: this.state.scene, cam: this.state.cam, subscribeTicks: this.subscribeTicks }}>
                 <div
                     style={{ width: window.innerWidth, height: window.innerHeight }}
                     ref={this.ref}

@@ -35,6 +35,7 @@ export interface UserUpdatedEvent {
 
 // Game
 export interface GameStateChangedEvent {
+    gid: string;
     type: 'GameStateChangedEvent';
     state: GameState;
     ttl?: number;
@@ -42,12 +43,14 @@ export interface GameStateChangedEvent {
 }
 
 export interface GameUserGaveAnswer {
+    gid: string;
     type: 'GameUserGaveAnswer';
     qid: string;
     uid: string;
 }
 
 export interface GameScoreChangedEvent {
+    gid: string;
     type: 'GameScoreChangedEvent';
     uid: string;
     score: number;

@@ -4,6 +4,7 @@ import { ClientUser } from '../../server/src/user/User';
 import { ClientQuestion, GameState as State } from '../../server/src/game/Game';
 
 export interface GameState {
+    id?: string;
     scores: Map<string, { user: ClientUser, score: number }>;
     question?: ClientQuestion;
     state: State | 'wait';
@@ -12,7 +13,6 @@ export interface GameState {
 
 export class GameModel {
     session: SessionModel;
-    id?: string;
     constructor(session: SessionModel) {
         this.session = session;
     }
@@ -36,9 +36,10 @@ export class GameModel {
     }
 
 
+    // TOOD create separate game states?
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         if (event.type === 'GameStateChangedEvent') {
-            this.setState({ question: event.question, state: event.state, ttl: event.ttl || 0 });
+            this.setState({ id: event.gid, question: event.question, state: event.state, ttl: event.ttl || 0 });
             notifyers.add(this.notify);
         } else if (event.type === 'GameScoreChangedEvent') {
             let user = this.session.users.get(event.uid);

@@ -10,6 +10,8 @@ export const SessionComponent = () => {
     return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
         <div><SessionStateComponent /></div>
         <div><Users /></div>
+        <Game />
+
     </FlexLayout>;
 }
 
@@ -45,12 +47,17 @@ export const SessionStateComponent = () => {
         }
     }, [state.state]);
 
+    let reset = React.useCallback(() => {
+        session!.io.emit({ type: 'SessionReset', id: session!.id })
+    }, [state.state]);
+
     return <>
         {JSON.stringify(state)}
         {state.state === 'countdown' && <div>
             {state.ttl - new Date().getTime()}
         </div>}
         {(state.state === 'await' || state.state === 'countdown') && <Button onClick={startStop} style={{ opacity: loading ? 0.5 : 1 }} >{state.state === 'await' ? 'start' : 'stop'}</Button>}
+        <Button onClick={reset} >RESET</Button>
         <Profile />
     </>
 }
@@ -65,7 +72,7 @@ export const Users = () => {
         return dispose;
     }, [session]);
 
-    return <>{JSON.stringify(state)}</>
+    return <>{JSON.stringify(Array.from(state))}</>
 }
 
 export const Profile = () => {
@@ -113,7 +120,7 @@ export const AnswerOpen = (props: { onPick: (answer: string) => void }) => {
     </>
 }
 
-export const Question = (props: { q: ClientQuestion }) => {
+export const Question = (props: { q: ClientQuestion, gid: string }) => {
     const [answer, setAnsser] = React.useState<string>();
     const [submited, setSubmited] = React.useState(false);
     const onPick = React.useCallback((answer: string) => {
@@ -125,16 +132,16 @@ export const Question = (props: { q: ClientQuestion }) => {
         if (!answer) {
             return;
         }
-        session!.io.emit({ type: 'Answer', gid: session!.game.id!, answer, qid: props.q._id })
+        session!.io.emit({ type: 'Answer', gid: props.gid, answer, qid: props.q._id });
         setSubmited(true);
-    }, []);
+    }, [answer]);
     return <>
 
         <div>{props.q.text}</div>
         {props.q.open && <AnswerOpen onPick={onPick} />}
         {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} onPick={onPick} />}
 
-        <Button onClick={onSubmit} style={{ background: answer ? 'green' : 'gray' }}>{submited ? '🙈SEND' : ' ✅SENT'}</Button>
+        <Button onClick={onSubmit} style={{ background: answer ? 'green' : 'gray' }}>{submited ? ' ✅SENT' : '🙈SEND'}</Button>
 
     </>
 }
@@ -162,7 +169,9 @@ export const Game = () => {
 
     return <>
         <div>---{state.state}---</div>
-        <div>{JSON.stringify(state.scores)}</div>
-        {state.question && <Question q={state.question} />}
+        <div>{timeout}</div>
+
+        <div>{JSON.stringify(Array.from(state.scores))}</div>
+        {state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
     </>;
 }

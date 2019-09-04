@@ -35,13 +35,11 @@ export class SessionWatcher {
     init = async () => {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
 
-        console.log('[SessionWatcher]', 'init', session);
 
         // subscribe for updates
         this.sessionWatcher = SESSIONS().watch([{ $match: { 'fullDocument._id': new ObjectId(this.id) } }], { fullDocument: 'updateLookup' });
         this.sessionWatcher.on('change', async (next: MDBChangeOp<Session>) => {
-            console.log('[SessionWatcher]', 'change', next);
-            if (next.operationType === 'update') {
+            if (next.operationType === 'update' || next.operationType === 'insert') {
                 this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl, gid: session.gameId && session.gameId.toHexString() });
 
                 if (this.gameWatcher && (!next.fullDocument.gameId || !this.gameWatcher.id.equals(next.fullDocument.gameId))) {
@@ -84,7 +82,7 @@ export class SessionWatcher {
     addUserConnection = async (connection: UserConnection) => {
         // update user session state
         this.connections.add(connection);
-        await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { visible: !!connection.isMobile, online: true } }, { upsert: true });
+        await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { visible: !!connection.isMobile, online: true, connectionId: connection.id } }, { upsert: true });
 
         // notify user about current state
         // users
@@ -115,7 +113,7 @@ export class SessionWatcher {
             this.dispose();
             sessionWatchers.delete(this.id);
         }
-        SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id }, { $set: { online: false } });
+        SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id, connectionId: connection.id }, { $set: { online: false } });
     }
 
     ////
@@ -128,6 +126,9 @@ export class SessionWatcher {
     }
 
     watchUser = (user: SessionUser) => {
+        if (this.userWatchers.get(user._id.toHexString())) {
+            return
+        }
         let watcher = USERS().watch([{ $match: { 'fullDocument._id': new ObjectId(user.uid) } }], { fullDocument: 'updateLookup' });
         this.userWatchers.set(user._id.toHexString(), watcher);
 

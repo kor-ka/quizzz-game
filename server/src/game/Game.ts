@@ -2,6 +2,7 @@ import { ObjectId } from "bson";
 import { MDB } from "../MDB";
 import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
 import { Message } from "../entity/messages";
+import { promises } from "fs";
 
 export type GameState = 'question' | 'subResults' | 'results';
 
@@ -23,12 +24,14 @@ interface Question {
 }
 
 interface GameQuestion {
+    _id: ObjectId;
     qid: ObjectId;
     gid: ObjectId;
     completed: boolean;
 }
 
 interface GameUserAnswer {
+    _id: ObjectId;
     qid: ObjectId;
     gid: ObjectId;
     uid: ObjectId;
@@ -37,6 +40,7 @@ interface GameUserAnswer {
 }
 
 export interface GameUserScore {
+    _id: ObjectId;
     gid: ObjectId;
     uid: ObjectId;
     points: number;
@@ -72,13 +76,19 @@ export let GAME_USER_SCORE = () => MDB.collection<GameUserScore>('game_user_scor
 export const startGame = async (sid: ObjectId) => {
 
     // TODO: filter user known questions
-    let questions = await QUESTION().aggregate([{ $sample: 3 }]).toArray();
+    let questions = await QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
 
-    let ttl = new Date().getTime() + 10000;
+    let ttl = new Date().getTime() + 20000;
     let qid = questions[0]._id;
-    let gid = (await GAME().insert({ state: 'question', stateTtl: ttl, qid, sid })).insertedId;
-    await GAME_QUESTION().insertMany(questions.map(q => ({ qid: q._id, gid, completed: false })));
-    await WORK_QUEUE_GAME().insert({ gid: gid, type: 'GameChangeState', ttl, to: 'subResults', qid })
+    let gid = (await GAME().insertOne({ state: 'question', stateTtl: ttl, qid, sid })).insertedId;
+    console.log("START GAME", gid);
+    try {
+        await GAME_QUESTION().insertMany(questions.map(q => ({ qid: q._id, gid, completed: false })), { ordered: false });
+    } catch (e) {
+        // ignore duplicates
+        // console.warn(e);
+    }
+    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'subResults', qid })
     return gid;
 }
 
@@ -90,8 +100,9 @@ export const moveToState = async (args: GameChangeState) => {
 
         // update scores
         let currentAnswers = await GAME_USER_ANSWER().find({ gid: args.gid, qid: args.qid }).toArray();
+        console.warn('[GAME]', 'sub results', 'answers', currentAnswers.length);
         for (let ca of currentAnswers) {
-            await GAME_USER_SCORE().update({ gid: ca.gid, uid: ca.uid }, { $inc: { points: ca.points } });
+            await GAME_USER_SCORE().update({ gid: ca.gid, uid: ca.uid }, { $inc: { points: ca.points } }, { upsert: true });
         }
         // update state
         let stateTtl = new Date().getTime() + 10000;
@@ -99,6 +110,7 @@ export const moveToState = async (args: GameChangeState) => {
 
         // pick and schedule next state
         let candidate = await GAME_QUESTION().findOne({ gid: args.gid, completed: false });
+        console.warn('[GAME]', 'candidate', candidate && candidate.qid);
         if (candidate) {
             await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'question', qid: candidate.qid, gid: args.gid });
         } else {
@@ -108,7 +120,7 @@ export const moveToState = async (args: GameChangeState) => {
     } else if (args.to === 'question') {
         // update state
         let stateTtl = new Date().getTime() + 20000;
-        await GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.gid } });
+        await GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.qid } });
 
         // schedule reults
         await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'subResults', qid: args.qid, gid: args.gid });
@@ -138,7 +150,11 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
     let g = new ObjectId(gid);
     let q = new ObjectId(qid);
     let game = await GAME().findOne({ _id: g });
-    if (game) {
-        await GAME_USER_ANSWER().insertOne({ gid: g, qid: q, uid: u, answer, points: game.qid.equals(q) ? 1 : 0 });
+    let question = await QUESTION().findOne({ _id: q });
+    if (game && question) {
+        let points = 1;
+        points *= game.qid.equals(q) ? 1 : 0;
+        points *= (question.answer === answer) ? 1 : 0;
+        await GAME_USER_ANSWER().insertOne({ gid: g, qid: q, uid: u, answer, points });
     }
 }

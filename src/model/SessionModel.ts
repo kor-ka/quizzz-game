@@ -79,7 +79,6 @@ export class SessionModel {
             notifyers.add(this.notifyUser);
         } else if (event.type === 'SessionStateChangedEvent') {
             this.sesssionState = { state: event.state, ttl: event.ttl || 0 };
-            this.game.id = event.gid;
             notifyers.add(this.notifyState);
         }
 
@@ -115,7 +114,7 @@ export class SessionModel {
     }
 
     notifyUser = () => {
-        this.usersListeners.forEach(l => l(this.users));
+        this.usersListeners.forEach(l => l(new Map(this.users)));
         console.log('[session]', 'new users', this.users);
 
     }

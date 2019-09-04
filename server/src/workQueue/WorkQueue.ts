@@ -46,7 +46,7 @@ export const startWorker = () => {
     started = true;
     setInterval(async () => {
         // what if node shut down after lock but before complete?
-        let work = await WORK_QUEUE().findOneAndUpdate({ ttl: { $gte: new Date().getTime() }, lock: { $ne: true } }, { $set: { lock: true } });
+        let work = await WORK_QUEUE().findOneAndUpdate({ ttl: { $lte: new Date().getTime() }, lock: { $ne: true } }, { $set: { lock: true } });
         if (work.ok === 1 && work.value) {
             try {
                 await performWork(work.value);

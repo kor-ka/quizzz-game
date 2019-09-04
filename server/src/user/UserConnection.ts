@@ -5,8 +5,10 @@ import { Message } from '../entity/messages';
 import { SessionWatcher, getSessionWatcher } from '../session/SesionWatcher';
 import { handleMessage as sessionHandleMessage } from '../session/Session';
 import { gameHandleMessage } from '../game/Game';
+import { makeId } from '../utils/makeId';
 
 export class UserConnection {
+    id = makeId();
     socket: Socket
     user?: User;
     isMobile?: boolean;

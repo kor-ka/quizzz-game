@@ -79,7 +79,6 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     let scene = React.useContext(SceneContext);
 
     let [card] = React.useState(getCard());
-    let [text, setText] = React.useState<Mesh>();
     React.useEffect(() => {
 
 
@@ -96,26 +95,10 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         let zTremor = hashCode(props.qid + 'z') % rotationTremor - rotationTremor / 2;
         card.rotation.z += zTremor;
 
-        let text = getTextMesh({
-            width: 440, height: 310,
-            // text: 'Вопро́с — форма мысли, выраженная в основном языке предложением, которое произносят или пишут, когда хотят что-нибудь спросить, то есть получить интересующую информацию.',
-            text: 'Вопро́с — форма мысли.',
-            fontSize: 60,
-            padding: 40
-        });
-        card.add(text);
-
-        text.rotation.x = THREE.Math.degToRad(180);
-        text.rotation.z = THREE.Math.degToRad(-90);
-        text.position.z = -2;
-
-
         scene.scene.add(card);
         return () => {
             // animate
-            setTimeout(() => {
-                scene.scene.remove(card);
-            }, 2000);
+            scene.scene.remove(card);
         }
     }, []);
 
@@ -123,16 +106,36 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
 
     React.useEffect(() => {
         if (props.question!!) {
-            // card.position.fromArray(new Vector3(0, 0, 50).toArray());
-            // card.rotation.fromArray(new Vector3(THREE.Math.degToRad(90), 0, THREE.Math.degToRad(90)).toArray());
             if (props.active) {
                 console.log(props.qid, 'animate to active');
+
+                // find position infront of cam
+                let angle = THREE.Math.degToRad(90 - scene.cam.fov / 2);
+
+                // todo - respect aspect
+                let distance = (160) * Math.tan(angle);
+
+                let mesh = new THREE.Mesh();
+                scene.cam.add(mesh);
+                mesh.translateZ(-distance);
+
+                let targetPostion = new Vector3();
+                mesh.getWorldPosition(targetPostion);
+
+                let targetRotation = scene.cam.rotation.clone();
+                targetRotation.z += THREE.Math.degToRad(-90);
+                targetRotation.x += THREE.Math.degToRad(-180);
+                let targetRotationVector = targetRotation.toVector3();
+
                 cardAnimatTo({
-                    position: new Vector3(0, 0, 250),
+                    position: targetPostion,
+                    // position: new Vector3(0, 0, 250),
                     pcb: [.34, .24, .18, 1.06],
-                    rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(-90)),
+                    rotation: targetRotationVector,
+                    // rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(-90)),
                     rcb: [.42, 0, .3, 1.01]
                 }, 1000);
+
             } else {
                 console.log(props.qid, 'animate to old');
                 cardAnimatTo({ position: new Vector3(100, 0, 700), rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(0)) }, 200);
@@ -142,29 +145,31 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     }, [props.question!!, props.active]);
 
     React.useEffect(() => {
-        // if (props.question && props.question.text) {
-        //     let text = new MeshText2D("RIGHT", { align: textAlign.right, font: '30px Arial', fillStyle: '#000000', antialias: true }).mesh;
-        //     setText(text);
-        //     scene.scene.add(text);
-        //     text.translateX(10);
+        let text: THREE.Mesh;
+        if (props.question && props.question.text) {
+            let text = getTextMesh({
+                width: 440, height: 310,
+                // text: 'Вопро́с — форма мысли, выраженная в основном языке предложением, которое произносят или пишут, когда хотят что-нибудь спросить, то есть получить интересующую информацию.',
+                // text: 'Вопро́с — форма мысли.',
+                text: props.question.text,
+                fontSize: 60,
+                padding: 40
+            });
+            card.add(text);
 
-        // } else if (text) {
-        //     card.remove(text);
-        //     setText(undefined);
-        // }
+            text.rotation.x = THREE.Math.degToRad(180);
+            text.rotation.z = THREE.Math.degToRad(-90);
+            text.position.z = -2;
+        }
 
-        // return () => {
-        //     if (text) {
-        //         card.remove(text);
-        //         setText(undefined);
-        //     }
-        // }
+        return () => {
+            if (text) {
+                card.remove(text);
+            }
+        }
     }, [props.question && props.question.text]);
 
-    return <div>
-        {/* {JSON.stringify(props)} */}
-        {/* <canvas ref={canvasRef} width={440 * window.devicePixelRatio} height={310 * window.devicePixelRatio} style={{ position: 'absolute', right: -500 }} /> */}
-    </div>;
+    return <></>;
 
 });
 

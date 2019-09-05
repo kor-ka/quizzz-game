@@ -14,6 +14,7 @@ import { Idle } from './Idle';
 import { makeId } from '../utils/makeId';
 import { useAnimation } from './useAnimation';
 import { MeshText2D, textAlign } from 'three-text2d';
+import { hashCode } from '../utils/hashCode';
 
 export const SessionComponent = () => {
     return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
@@ -82,8 +83,19 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     React.useEffect(() => {
 
 
-        card.position.z = props.index * 11;
+        card.position.z = props.index * 6;
         card.rotation.z = THREE.Math.degToRad(-45);
+
+        let positionTremor = 10;
+        let xTremor = hashCode(props.qid + 'x') % positionTremor - positionTremor / 2;
+        card.position.x += xTremor;
+        let yTremor = hashCode(props.qid + 'y') % positionTremor - positionTremor / 2;
+        card.position.y += yTremor;
+
+        let rotationTremor = THREE.Math.degToRad(5);
+        let zTremor = hashCode(props.qid + 'z') % rotationTremor - rotationTremor / 2;
+        card.rotation.z += zTremor;
+
         let text = getTextMesh({
             width: 440, height: 310,
             // text: 'Вопро́с — форма мысли, выраженная в основном языке предложением, которое произносят или пишут, когда хотят что-нибудь спросить, то есть получить интересующую информацию.',
@@ -183,13 +195,13 @@ export const GameRender = () => {
 
     const reset = React.useCallback(() => {
         let res = [];
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 10; i++) {
             res.push(
                 {
                     qid: makeId(),
                     category: new Date().getTime() + 'test',
                     active: true,
-                    question: i === 2 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
+                    question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
                 }
             );
         }

@@ -46,7 +46,7 @@ export const getCard = () => {
 
     var geometry = new THREE.ExtrudeGeometry(shape, {
         steps: 1,
-        depth: 2,
+        depth: 3,
         bevelEnabled: false,
     });
     var material = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -100,6 +100,7 @@ export let getTextMesh = (props: { width: number, height: number, text: string, 
 
     var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
+    texture.minFilter = THREE.LinearFilter;
 
     let material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
 
@@ -108,7 +109,6 @@ export let getTextMesh = (props: { width: number, height: number, text: string, 
 
     let resHeight = lines * lineHeight;
 
-    console.warn(lines, lineHeight);
     if (resHeight < (height - padding * 2)) {
         mesh.translateX(-((height - padding * 2) - resHeight) / 2)
     }

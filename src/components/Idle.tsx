@@ -5,11 +5,9 @@ import { SceneContext } from './Scene';
 import { getCube, useAddMeshRemove } from './Helpers';
 
 export const Idle = (props: { active: boolean; }) => {
-    let session = React.useContext(SessionContext)!;
-    let scene = React.useContext(SceneContext);
 
     let [cube, setCube] = React.useState(getCube())
-    useAddMeshRemove(scene, cube);
+    useAddMeshRemove(cube);
 
     React.useEffect(() => {
         let interval = setInterval(() => {

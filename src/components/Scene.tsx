@@ -1,9 +1,10 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as THREE from 'three';
+import { FlexLayout } from "../ui/ui";
 export const isChromium = (window as any).chrome;
 
-export const SceneContext = React.createContext<{ scene?: THREE.Scene, cam?: THREE.PerspectiveCamera, subscribeTicks: (listener: () => void) => () => void }>({ subscribeTicks: () => () => { } });
+export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: () => void) => () => void }>({} as any);
 
 export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: THREE.PerspectiveCamera }> {
     ref = React.createRef<HTMLDivElement>();
@@ -43,8 +44,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
                 Number.MAX_SAFE_INTEGER
             )
             this.cam.position.z = this.minSceneCamZ;
-            // this.cam.position.x = -500;
-            // this.cam.position.y = -500;
+            this.cam.position.y = -500;
 
             const color = 0xFFFFFF;
             const intensity = 1;
@@ -82,6 +82,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
         cancelAnimationFrame(this.frameId!)
     }
     tick = () => {
+        this.tickListeners.forEach(l => l());
         this.renderScene()
         this.frameId = window.requestAnimationFrame(this.tick)
     }
@@ -92,12 +93,14 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
     }
     render() {
         return (
-            <SceneContext.Provider value={{ scene: this.state.scene, cam: this.state.cam, subscribeTicks: this.subscribeTicks }}>
+            <SceneContext.Provider value={{ scene: this.state.scene!, cam: this.state.cam!, subscribeTicks: this.subscribeTicks }}>
                 <div
                     style={{ width: window.innerWidth, height: window.innerHeight }}
                     ref={this.ref}
                 />
-                {this.props.children}
+                <FlexLayout style={{ width: '100%', height: '100%', position: 'absolute' }}>
+                    {this.state.cam && this.state.scene && this.props.children}
+                </FlexLayout>
             </SceneContext.Provider>
         )
     }

@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import * as React from "react";
 import { Vector3 } from 'three';
+import { SceneContext } from './Scene';
 
-export const useAddMeshRemove = (scene: { scene?: THREE.Scene | undefined }, mesh: THREE.Mesh | THREE.Mesh[]) => {
+export const useAddMeshRemove = (mesh: THREE.Mesh | THREE.Mesh[]) => {
+    let scene = React.useContext(SceneContext);
     React.useEffect(() => {
         let toRemove = Array.isArray(mesh) ? mesh : [mesh];
         if (scene.scene) {

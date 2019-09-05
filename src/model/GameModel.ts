@@ -7,7 +7,7 @@ export interface GameState {
     id?: string;
     scores: Map<string, { user: ClientUser, score: number }>;
     question?: ClientQuestion;
-    stack: { qid: string, category: string, question?: ClientQuestion }[]
+    stack: { qid: string, category: string, question?: ClientQuestion, active: boolean }[]
     state: State | 'wait';
     ttl: number
 }
@@ -40,7 +40,14 @@ export class GameModel {
     // TOOD create separate game states?
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         if (event.type === 'GameStateChangedEvent') {
-            let stack = event.stack.map(q => q.qid === (event.question && event.question._id) ? { ...q, question: event.question } : q);
+            let stack = event.stack.map(q => {
+                let isCurretn = q.qid === (event.question && event.question._id);
+                if (isCurretn) {
+                    return { ...q, question: event.question, active: event.state === 'question' };
+                } else {
+                    return { ...q, active: false };
+                }
+            });
             this.setState({ id: event.gid, question: event.question, state: event.state, ttl: event.ttl || 0, stack });
             notifyers.add(this.notify);
         } else if (event.type === 'GameScoreChangedEvent') {

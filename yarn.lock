@@ -1146,6 +1146,11 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/bezier-easing@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/bezier-easing/-/bezier-easing-2.0.0.tgz#addbc86aec544788a7dca64dd136a83c1711af16"
+  integrity sha512-AnyMAZvjcoErWh2jGb8O2mh462iwGL2Vn2M2Y2kLByoQ7+zhxJCkwV0zbg/ZnvvwgDb5VqVJh5seVBUH8UQQlQ==
+
 "@types/body-parser@*":
   version "1.17.1"
   resolved "https://registry.yarnpkg.com/@types/body-parser/-/body-parser-1.17.1.tgz#18fcf61768fb5c30ccc508c21d6fd2e8b3bf7897"
@@ -2090,6 +2095,11 @@ better-assert@~1.0.0:
   integrity sha1-QIZrnhueC1W0gYlDEeaPr/rrxSI=
   dependencies:
     callsite "1.0.0"
+
+bezier-easing@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/bezier-easing/-/bezier-easing-2.1.0.tgz#c04dfe8b926d6ecaca1813d69ff179b7c2025d86"
+  integrity sha1-wE3+i5JtbsrKGBPWn/F5t8ICXYY=
 
 big.js@^5.2.2:
   version "5.2.2"

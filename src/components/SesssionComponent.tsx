@@ -8,11 +8,12 @@ import { GameState } from "../model/GameModel";
 import { ClientQuestion, answer } from "../../server/src/game/Game";
 import { Scene, SceneContext } from "./Scene";
 import { SessionStateComponent as DebugSessionStateComponent, Users as DebugUsers, Game as DebugGame } from "./DEbugComponents";
-import { getCube, useAddMeshRemove as useAddMesh, getCard } from "./Helpers";
-import { MeshBasicMaterial, Vector3 } from "three";
+import { getCube, useAddMeshRemove as useAddMesh, getCard, wrapText, getTextMesh } from "./Helpers";
+import { MeshBasicMaterial, Vector3, Mesh } from "three";
 import { Idle } from './Idle';
 import { makeId } from '../utils/makeId';
 import { useAnimation } from './useAnimation';
+import { MeshText2D, textAlign } from 'three-text2d';
 
 export const SessionComponent = () => {
     return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
@@ -77,9 +78,25 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     let scene = React.useContext(SceneContext);
 
     let [card] = React.useState(getCard());
+    let [text, setText] = React.useState<Mesh>();
     React.useEffect(() => {
+
+
         card.position.z = props.index * 11;
         card.rotation.z = THREE.Math.degToRad(-45);
+        let text = getTextMesh({
+            width: 440, height: 310,
+            // text: 'Вопро́с — форма мысли, выраженная в основном языке предложением, которое произносят или пишут, когда хотят что-нибудь спросить, то есть получить интересующую информацию.',
+            text: 'Вопро́с — форма мысли.',
+            fontSize: 60,
+            padding: 40
+        });
+        card.add(text);
+
+        text.rotation.x = THREE.Math.degToRad(180);
+        text.rotation.z = THREE.Math.degToRad(-90);
+        text.position.z = -10;
+
 
         scene.scene.add(card);
         return () => {
@@ -112,8 +129,29 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         }
     }, [props.question!!, props.active]);
 
+    React.useEffect(() => {
+        // if (props.question && props.question.text) {
+        //     let text = new MeshText2D("RIGHT", { align: textAlign.right, font: '30px Arial', fillStyle: '#000000', antialias: true }).mesh;
+        //     setText(text);
+        //     scene.scene.add(text);
+        //     text.translateX(10);
+
+        // } else if (text) {
+        //     card.remove(text);
+        //     setText(undefined);
+        // }
+
+        // return () => {
+        //     if (text) {
+        //         card.remove(text);
+        //         setText(undefined);
+        //     }
+        // }
+    }, [props.question && props.question.text]);
+
     return <div>
-        {JSON.stringify(props)}
+        {/* {JSON.stringify(props)} */}
+        {/* <canvas ref={canvasRef} width={440 * window.devicePixelRatio} height={310 * window.devicePixelRatio} style={{ position: 'absolute', right: -500 }} /> */}
     </div>;
 
 });

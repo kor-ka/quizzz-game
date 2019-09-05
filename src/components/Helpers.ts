@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as React from "react";
 import { Vector3 } from 'three';
 import { SceneContext } from './Scene';
+import { MeshText2D, textAlign } from 'three-text2d'
 
 export const useAddMeshRemove = (mesh: THREE.Mesh | THREE.Mesh[]) => {
     let scene = React.useContext(SceneContext);
@@ -25,7 +26,7 @@ export const getCube = () => {
 }
 
 export const getCard = () => {
-    var height = 88, width = 62, radius = 8;
+    var height = 440, width = 310, radius = 40;
 
     var shape = new THREE.Shape();
 
@@ -48,13 +49,70 @@ export const getCard = () => {
         depth: 2,
         bevelEnabled: false,
     });
-    var material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+    var material = new THREE.MeshLambertMaterial({ color: 0xffffff });
 
     let mesh = new THREE.Mesh(geometry, material);
 
     mesh.geometry.center();
-    let scale = 5;
-    mesh.geometry.scale(scale, scale, scale);
 
     return mesh;
 }
+
+export let wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number, color: string) => {
+    var words = text.split(' ');
+    var line = '';
+    var lines = 1;
+    context.fillStyle = color;
+    for (let n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + ' ';
+        var metrics = context.measureText(testLine);
+        var testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            context.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+            lines++;
+        }
+        else {
+            line = testLine;
+        }
+    }
+    context.fillText(line || text, x, y);
+    return lines;
+}
+export let getTextMesh = (props: { width: number, height: number, text: string, fontSize: number, padding?: number, color?: string }) => {
+    let { width, height, text, fontSize, padding, color } = props;
+    padding = padding || 0;
+    color = color || 'black';
+    let canvas = document.createElement('canvas');
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+
+    var context = canvas.getContext('2d')!;
+    var maxWidth = (width - padding * 2) * window.devicePixelRatio;
+    var lineHeight = fontSize * 0.4 * window.devicePixelRatio;
+    var x = (canvas.width - maxWidth) / 2;
+    var y = lineHeight + padding
+    context.font = `${fontSize}px Arial`;
+    context.fillStyle = 'rgba(0,0,0,0)'
+    context.fillRect(0, 0, 1000, 1000);
+    let lines = wrapText(context, text, x, y, maxWidth, lineHeight, color);
+
+    var texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true;
+
+    let material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
+
+    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height, 10, 10), material);
+    canvas.remove();
+
+    let resHeight = lines * lineHeight;
+
+    console.warn(lines, lineHeight);
+    if (resHeight < (height - padding * 2)) {
+        mesh.translateX(-((height - padding * 2) - resHeight) / 2)
+    }
+
+    return mesh;
+}
+

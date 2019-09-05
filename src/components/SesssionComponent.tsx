@@ -107,7 +107,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
 
         text.rotation.x = THREE.Math.degToRad(180);
         text.rotation.z = THREE.Math.degToRad(-90);
-        text.position.z = -10;
+        text.position.z = -2;
 
 
         scene.scene.add(card);

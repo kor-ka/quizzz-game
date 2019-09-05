@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as React from "react";
-import { Vector3 } from 'three';
+import { Vector3, ExtrudeGeometry } from 'three';
 import { SceneContext } from './Scene';
 import { MeshText2D, textAlign } from 'three-text2d'
 
@@ -53,7 +53,17 @@ export const getCard = () => {
 
     let mesh = new THREE.Mesh(geometry, material);
 
+
+
     mesh.geometry.center();
+
+    let text = getTextMesh({ width: 440, height: 310, text: 'Q?', fontSize: 750, font: 'Courier', bold: true })
+    mesh.add(text);
+    text.position.z = 2;
+    // text.rotation.x = THREE.Math.degToRad(180);
+    text.rotation.z = THREE.Math.degToRad(90);
+    // text.position.x += 120;
+
 
     return mesh;
 }
@@ -80,10 +90,11 @@ export let wrapText = (context: CanvasRenderingContext2D, text: string, x: numbe
     context.fillText(line || text, x, y);
     return lines;
 }
-export let getTextMesh = (props: { width: number, height: number, text: string, fontSize: number, padding?: number, color?: string }) => {
-    let { width, height, text, fontSize, padding, color } = props;
+export let getTextMesh = (props: { width: number, height: number, text: string, fontSize: number, padding?: number, color?: string, font?: string, bold?: boolean }) => {
+    let { width, height, text, fontSize, padding, color, font, bold } = props;
     padding = padding || 0;
     color = color || 'black';
+    font = font || 'Arial';
     let canvas = document.createElement('canvas');
     canvas.width = width * window.devicePixelRatio;
     canvas.height = height * window.devicePixelRatio;
@@ -93,7 +104,8 @@ export let getTextMesh = (props: { width: number, height: number, text: string, 
     var lineHeight = fontSize * 0.4 * window.devicePixelRatio;
     var x = (canvas.width - maxWidth) / 2;
     var y = lineHeight + padding
-    context.font = `${fontSize}px Arial`;
+    context.font = `${bold ? 'bold' : ''} ${fontSize}px ${font}`;
+    // context.fillStyle = '#f9e'
     context.fillStyle = 'rgba(0,0,0,0)'
     context.fillRect(0, 0, 1000, 1000);
     let lines = wrapText(context, text, x, y, maxWidth, lineHeight, color);

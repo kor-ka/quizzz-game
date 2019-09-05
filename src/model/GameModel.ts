@@ -40,12 +40,14 @@ export class GameModel {
     // TOOD create separate game states?
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         if (event.type === 'GameStateChangedEvent') {
+            event.stack.reverse();
             let stack = event.stack.map(q => {
                 let isCurretn = q.qid === (event.question && event.question._id);
+                console.warn(q.qid, event.question && event.question._id);
                 if (isCurretn) {
                     return { ...q, question: event.question, active: event.state === 'question' };
                 } else {
-                    return { ...q, active: false };
+                    return { ...q, active: true };
                 }
             });
             this.setState({ id: event.gid, question: event.question, state: event.state, ttl: event.ttl || 0, stack });
@@ -54,6 +56,7 @@ export class GameModel {
             let user = this.session.users.get(event.uid);
             if (user) {
                 this.state.scores.set(event.uid, { user, score: event.score })
+                this.setState({ scores: new Map(this.state.scores) });
             }
             notifyers.add(this.notify);
         }

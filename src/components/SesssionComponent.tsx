@@ -19,9 +19,10 @@ import { hashCode } from '../utils/hashCode';
 export const SessionComponent = () => {
     return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
         <Scene>
-            {/* <div><DebugSessionStateComponent /></div>
+            <div><DebugSessionStateComponent /></div>
             <div><DebugUsers /></div>
-            <div><DebugGame /></div> */}
+            <FlexLayout style={{ flexGrow: 1 }} />
+            <div><DebugGame /></div>
             <SceneRender />
         </Scene>
     </FlexLayout >;
@@ -97,7 +98,6 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
 
         scene.scene.add(card);
         return () => {
-            // animate
             scene.scene.remove(card);
         }
     }, []);
@@ -169,58 +169,26 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         }
     }, [props.question && props.question.text]);
 
-    return <></>;
+    return <>{JSON.stringify(props)}</>;
 
 });
 
 export const GameRender = () => {
     let scene = React.useContext(SceneContext);
-
     scene.cam.rotation.x = THREE.Math.degToRad(45);
 
+    let session = React.useContext(SessionContext);
 
     let [cards, setCards] = React.useState<{ qid: string, category: string, question?: ClientQuestion, active: boolean }[]>([]);
 
-    const pop = React.useCallback(() => {
-        let res = [...cards];
-
-        let last = res[res.length - 1];
-        if (last) {
-            if (last.active) {
-                last.active = false;
-            } else {
-                res.pop();
-                if (res[res.length - 1]) {
-                    res[res.length - 1].question = { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' };
-                }
-            }
-        }
-        setCards(res);
-    }, [cards]);
-
-    const reset = React.useCallback(() => {
-        let res = [];
-        for (let i = 0; i < 10; i++) {
-            res.push(
-                {
-                    qid: makeId(),
-                    category: new Date().getTime() + 'test',
-                    active: true,
-                    question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
-                }
-            );
-        }
-        setCards(res);
-    }, []);
-
     React.useEffect(() => {
-        reset();
+        session!.game.listen(gs => {
+            setCards(gs.stack);
+        });
     }, []);
 
     return <>
         {cards.map((c, i) => <GameCard key={c.qid} index={i} {...c} />)}
-        <Button onClick={pop}>Pop</Button>
-        <Button onClick={reset}>Reset</Button>
     </>
 
 }

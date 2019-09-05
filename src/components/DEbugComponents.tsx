@@ -159,6 +159,7 @@ export const Game = () => {
         }, 100);
     }, [state.ttl]);
 
+    // console.warn(state.scores);
     return <>
         <div>---{state.state}---</div>
         <div>{timeout}</div>

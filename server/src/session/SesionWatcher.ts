@@ -34,7 +34,9 @@ export class SessionWatcher {
 
     init = async () => {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
-
+        if (session.gameId) {
+            this.gameWatcher = await getGameWatcher(session.gameId, this);
+        }
 
         // subscribe for updates
         this.sessionWatcher = SESSIONS().watch([{ $match: { 'fullDocument._id': new ObjectId(this.id) } }], { fullDocument: 'updateLookup' });
@@ -54,7 +56,6 @@ export class SessionWatcher {
 
         let sessionUsers = await SESSION_USER().find({ sid: this.id });
         sessionUsers.map(this.watchUser);
-
 
         // detect user list changes
         this.sessionUsersWatcher = SESSION_USER().watch([{ $match: { 'fullDocument.sid': this.id } }], { fullDocument: 'updateLookup' });

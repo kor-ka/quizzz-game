@@ -22,7 +22,7 @@ export class GameWatcher {
         this.gameWatcher.on('change', async (next: MDBChangeOp<Game>) => {
             if (next.operationType === 'update') {
                 let question = await QUESTION().findOne({ _id: next.fullDocument.qid });
-                let questions = (await GAME_QUESTION().find({ gid: next.fullDocument._id, completed: false }).toArray()).map(q => ({ qid: q._id.toHexString(), category: q.categoty }));
+                let questions = (await GAME_QUESTION().find({ gid: next.fullDocument._id, completed: false }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty }));
                 this.session.emitAll({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question), stack: questions })
             }
         })
@@ -40,7 +40,7 @@ export class GameWatcher {
     getFullState = async () => {
         let game = await GAME().findOne({ _id: this.id });
         let question = await QUESTION().findOne({ _id: game.qid });
-        let questions = (await GAME_QUESTION().find({ gid: this.id, completed: false }).toArray()).map(q => ({ qid: q._id.toHexString(), category: q.categoty }));
+        let questions = (await GAME_QUESTION().find({ gid: this.id, completed: false }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty }));
         let scores = await GAME_USER_SCORE().find({ gid: this.id }).toArray();
         let batch: Event[] = [];
 

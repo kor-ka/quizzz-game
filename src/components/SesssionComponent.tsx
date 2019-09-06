@@ -66,7 +66,7 @@ export const SceneRender = () => {
         {/* <Idle active={state === 'idle'} /> */}
         {/* <Button style={{ border: state === 'idle' ? '1px solid black' : '' }} onClick={toIdle}>Idle</Button>
         <Button style={{ border: state === 'joining' ? '1px solid black' : '' }} onClick={tojoining}>joining</Button> */}
-        {state === 'joining' && <SessionStateComponent />}
+        {session!.isMobile && state === 'joining' && <SessionStateComponent />}
         {state === 'game' && <GameControls />}
         <GameRender />
     </>

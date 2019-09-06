@@ -255,7 +255,22 @@ export const Game = () => {
 
 
     return <>
-        {state.state === 'question' && state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
+        {session!.isMobile && state.state === 'question' && state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
         {(state.state === 'subResults' || state.state === 'results') && <Results game={state} />}
+        {!session!.isMobile && (
+            <Button style={{
+                backgroundColor: 'transparent',
+                opacity: 0.5,
+                color: 'black',
+                fontSize: '22px',
+                position: 'fixed',
+                bottom: 20, left: 20,
+                borderRadius: 48,
+                width: 148,
+                height: 48,
+                textAlign: 'left'
+
+            }}><GameTTL /></Button>
+        )}
     </>;
 }

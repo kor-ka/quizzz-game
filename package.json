@@ -2,6 +2,9 @@
   "name": "quizzz-game",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "10.x"
+  },
   "dependencies": {
     "@types/bezier-easing": "^2.0.0",
     "@types/cookie-parser": "^1.4.2",
@@ -17,7 +20,8 @@
     "bezier-easing": "^2.1.0",
     "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
-    "glamorous": "^5.0.0",
+    "glamor": "^2.20.40",
+    "glamorous": "^4.13.1",
     "js-cookie": "^2.2.1",
     "mobile-detect": "^1.4.3",
     "mongodb": "^3.3.2",

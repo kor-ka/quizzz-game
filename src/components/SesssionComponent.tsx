@@ -77,10 +77,11 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     let scene = React.useContext(SceneContext);
 
     let [card] = React.useState(getCard());
+    let { to: cardAnimatTo } = useAnimation(card);
     React.useEffect(() => {
 
 
-        card.position.z = props.index * 6;
+        card.position.z = props.index * 6 + 700;
         card.rotation.z = THREE.Math.degToRad(-45);
 
         let positionTremor = 10;
@@ -93,13 +94,16 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         let zTremor = hashCode(props.qid + 'z') % rotationTremor - rotationTremor / 2;
         card.rotation.z += zTremor;
 
+        let targetPostion = card.position.clone();
+        targetPostion.z -= 700;
+        cardAnimatTo({ position: targetPostion, pcb: [.74, .08, .89, .78] }, 500)
+
         scene.scene.add(card);
         return () => {
             scene.scene.remove(card);
         }
     }, []);
 
-    let { to: cardAnimatTo } = useAnimation(card);
 
     React.useEffect(() => {
         if (props.question!!) {
@@ -195,20 +199,20 @@ export const GameRender = () => {
         });
     }, []);
 
-    const reset = React.useCallback(() => {
-        let res = [];
-        for (let i = 0; i < 10; i++) {
-            res.push(
-                {
-                    qid: makeId(),
-                    category: new Date().getTime() + 'test',
-                    active: true,
-                    question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
-                }
-            );
-        }
-        setCards(res);
-    }, []);
+    // const reset = React.useCallback(() => {
+    //     let res = [];
+    //     for (let i = 0; i < 10; i++) {
+    //         res.push(
+    //             {
+    //                 qid: makeId(),
+    //                 category: new Date().getTime() + 'test',
+    //                 active: true,
+    //                 question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
+    //             }
+    //         );
+    //     }
+    //     setCards(res);
+    // }, []);
 
     // React.useEffect(() => {
     //     reset();

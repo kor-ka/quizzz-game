@@ -94,7 +94,7 @@ export let wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth
     realWidth = Math.max(realWidth, realMetrics.width);
 
     let startY = lineHeight + (height - lineHeight * lines.length) / 2 + (y || 0);
-    let startX = (maxWidth - realWidth) / 2;
+    let startX = (maxWidth - realWidth) / 2 + (x || 0);
     for (let i = 0; i < lines.length; i++) {
         context.fillText(lines[i], startX, startY + lineHeight * i);
     }

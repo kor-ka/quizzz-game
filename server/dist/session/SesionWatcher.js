@@ -73,12 +73,10 @@ class SessionWatcher {
         this.addUserConnection = (connection) => __awaiter(this, void 0, void 0, function* () {
             // update user session state
             this.connections.add(connection);
-            console.log('set online');
             yield Session_1.SESSION_USER().updateOne({ uid: connection.user._id.toHexString(), sid: this.id }, { $set: { visible: !!connection.isMobile, online: true, connectionId: connection.id } }, { upsert: true });
             // notify user about current state
             // users
             let sessionUsers = yield Session_1.SESSION_USER().find({ sid: this.id, visible: true, online: true }).toArray();
-            console.log('addUserConnection', sessionUsers.length);
             let batch = [];
             for (let su of yield sessionUsers) {
                 let user = yield User_1.getUser(su.uid);
@@ -101,7 +99,6 @@ class SessionWatcher {
                 sessionWatchers.delete(this.id);
             }
             yield Session_1.SESSION_USER().updateOne({ uid: connection.user._id.toHexString(), sid: this.id, connectionId: connection.id }, { $set: { online: false } });
-            console.log('set offline');
         });
         ////
         // UTIL

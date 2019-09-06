@@ -26,21 +26,21 @@ exports.QUESTION = () => MDB_1.MDB.collection('questions');
 exports.GAME_QUESTION = () => MDB_1.MDB.collection('game_questions');
 exports.GAME_USER_ANSWER = () => MDB_1.MDB.collection('game_user_answer');
 exports.GAME_USER_SCORE = () => MDB_1.MDB.collection('game_user_score');
-exports.startGame = (sid) => __awaiter(void 0, void 0, void 0, function* () {
+exports.startGame = (sid, after) => __awaiter(void 0, void 0, void 0, function* () {
     // TODO: filter user known questions
     let questions = yield exports.QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
-    let ttl = new Date().getTime() + 20000;
+    let ttl = new Date().getTime() + after;
     let qid = questions[0]._id;
-    let gid = (yield exports.GAME().insertOne({ state: 'question', stateTtl: ttl, qid, sid })).insertedId;
+    let gid = (yield exports.GAME().insertOne({ state: 'wait', stateTtl: ttl, sid })).insertedId;
     console.log("START GAME", gid);
     try {
-        yield exports.GAME_QUESTION().insertMany(questions.map(q => ({ qid: q._id, gid, completed: false, categoty: q.category })), { ordered: false });
+        yield exports.GAME_QUESTION().insertMany(questions.map(q => ({ gid, qid: q._id, completed: false, categoty: q.category })), { ordered: false });
     }
     catch (e) {
         // ignore duplicates
         // console.warn(e);
     }
-    yield WorkQueue_1.WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'subResults', qid });
+    yield WorkQueue_1.WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'question', qid });
     return gid;
 });
 exports.moveToState = (args) => __awaiter(void 0, void 0, void 0, function* () {
@@ -95,7 +95,7 @@ exports.answer = (uid, qid, gid, answer) => __awaiter(void 0, void 0, void 0, fu
     let q = new bson_1.ObjectId(qid);
     let game = yield exports.GAME().findOne({ _id: g });
     let question = yield exports.QUESTION().findOne({ _id: q });
-    if (game && question) {
+    if (game && game.qid && question) {
         let points = 1;
         points *= game.qid.equals(q) ? 1 : 0;
         points *= (question.answer === answer) ? 1 : 0;

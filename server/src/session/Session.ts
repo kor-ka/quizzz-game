@@ -41,7 +41,8 @@ let startCountdown = async (sessionId: string) => {
     let session = await SESSIONS().findOne({ _id: new ObjectId(sessionId) });
     if (session && session.state === 'await') {
         let ttl = new Date().getTime() + 10000;
-        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl } });
+        let gid = await startGame(session._id, 10000);
+        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl, gameId: gid } });
         await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new ObjectId(sessionId), to: 'game' });
     }
 
@@ -62,8 +63,7 @@ let reset = async (sessionId: string) => {
 
 export let moveToState = async (to: SessionChangeState) => {
     if (to.to === 'game') {
-        let gid = await startGame(to.sid);
-        await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: gid } });
+        await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
     } else {
         await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
 

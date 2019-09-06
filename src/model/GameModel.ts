@@ -62,4 +62,9 @@ export class GameModel {
         }
     }
 
+    reset = () => {
+        this.state = { scores: new Map(), state: 'wait', ttl: 0, stack: [] };
+        this.notify();
+    }
+
 }

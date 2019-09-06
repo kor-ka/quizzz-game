@@ -4,14 +4,14 @@ import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQue
 import { Message } from "../entity/messages";
 import { promises } from "fs";
 
-export type GameState = 'question' | 'subResults' | 'results';
+export type GameState = 'wait' | 'question' | 'subResults' | 'results';
 
 export interface Game {
     _id: ObjectId;
     sid: ObjectId;
     state: GameState;
     stateTtl: number;
-    qid: ObjectId;
+    qid?: ObjectId;
 }
 
 interface Question {
@@ -74,22 +74,22 @@ export let GAME_USER_ANSWER = () => MDB.collection<GameUserAnswer>('game_user_an
 export let GAME_USER_SCORE = () => MDB.collection<GameUserScore>('game_user_score');
 
 
-export const startGame = async (sid: ObjectId) => {
+export const startGame = async (sid: ObjectId, after: number) => {
 
     // TODO: filter user known questions
     let questions = await QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
 
-    let ttl = new Date().getTime() + 20000;
+    let ttl = new Date().getTime() + after;
     let qid = questions[0]._id;
-    let gid = (await GAME().insertOne({ state: 'question', stateTtl: ttl, qid, sid })).insertedId;
+    let gid = (await GAME().insertOne({ state: 'wait', stateTtl: ttl, sid })).insertedId;
     console.log("START GAME", gid);
     try {
-        await GAME_QUESTION().insertMany(questions.map(q => ({ qid: q._id, gid, completed: false, categoty: q.category })), { ordered: false });
+        await GAME_QUESTION().insertMany(questions.map(q => ({ gid, qid: q._id, completed: false, categoty: q.category })), { ordered: false });
     } catch (e) {
         // ignore duplicates
         // console.warn(e);
     }
-    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'subResults', qid })
+    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'question', qid })
     return gid;
 }
 
@@ -152,7 +152,7 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
     let q = new ObjectId(qid);
     let game = await GAME().findOne({ _id: g });
     let question = await QUESTION().findOne({ _id: q });
-    if (game && question) {
+    if (game && game.qid && question) {
         let points = 1;
         points *= game.qid.equals(q) ? 1 : 0;
         points *= (question.answer === answer) ? 1 : 0;

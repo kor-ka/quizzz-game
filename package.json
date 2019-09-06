@@ -37,9 +37,8 @@
   "proxy": "http://localhost:5000",
   "scripts": {
     "buildServer": "tsc --p server",
-    "startServer": "yarn buildServer && yarn build && node server/dist/index.js",
-    "dev": "yarn startServer & react-scripts start",
-    "props": "yarn buildServer && yarn startServer",
+    "startServer": "node server/dist/index.js",
+    "dev": "yarn buildServer && yarn build && yarn startServer & react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

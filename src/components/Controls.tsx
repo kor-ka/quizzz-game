@@ -121,6 +121,30 @@ export const AnswerOpen = (props: { onPick: (answer: string) => void }) => {
     </>
 }
 
+export const GameTTL = () => {
+    let session = React.useContext(SessionContext);
+    let [timeout, setTimeout] = React.useState(0);
+    let [state, setState] = React.useState<GameState>(session!.game.state);
+
+    React.useEffect(() => {
+        let dispose = session!.game.listen(s => {
+            setState(s);
+        });
+        return dispose;
+    }, [session]);
+    React.useEffect(() => {
+        let interval = setInterval(() => {
+            let left = Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000));
+            setTimeout(left);
+            if (left <= 0) {
+                clearInterval(interval);
+            }
+        }, 100);
+    }, [state.ttl]);
+
+    return <>{timeout}</>;
+}
+
 export const Question = (props: { q: ClientQuestion, gid: string }) => {
     const [answer, setAnsser] = React.useState<string>();
     const [submited, setSubmited] = React.useState(false);
@@ -136,34 +160,81 @@ export const Question = (props: { q: ClientQuestion, gid: string }) => {
         session!.io.emit({ type: 'Answer', gid: props.gid, answer, qid: props.q._id });
         setSubmited(true);
     }, [answer]);
+
+    let aspect = window.innerWidth / (440 + 20);
+    let offset = (310 + 20) * aspect;
     return <>
 
-        <FlexLayout style={{ pointerEvents: submited ? 'none' : 'auto' }} >
-            {props.q.open && <AnswerOpen onPick={onPick} />}
-            {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} onPick={onPick} />}
+        <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll' }} divider={0}>
+
+            <FlexLayout style={{ height: offset }} divider={0} >
+                {/* <Button onClick={() => {
+        setState({ ...state, state: state.state === 'question' ? 'subResults' : 'question' })
+    }}> asdasd</Button> */}
+            </FlexLayout>
+            <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
+                <FlexLayout style={{ pointerEvents: submited ? 'none' : 'auto' }} >
+                    {props.q.open && <AnswerOpen onPick={onPick} />}
+                    {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} onPick={onPick} />}
+                </FlexLayout>
+
+                <Button onClick={onSubmit} style={{
+                    opacity: !answer || submited ? 0.5 : 1,
+                    color: 'white',
+                    fontSize: '22px',
+                    background: 'black',
+                    position: 'fixed', bottom: 20, right: 20,
+                    borderRadius: 48,
+                    width: 148,
+                    height: 48,
+                }}>{submited ? 'ANSWERED' : 'SUBMIT'}</Button>
+
+                <Button style={{
+                    backgroundColor: 'transparent',
+                    opacity: 0.5,
+                    color: 'black',
+                    fontSize: '22px',
+                    position: 'fixed',
+                    bottom: 20, left: 20,
+                    borderRadius: 48,
+                    width: 148,
+                    height: 48,
+                    textAlign: 'left'
+
+                }}><GameTTL /></Button>
+
+            </FlexLayout>
         </FlexLayout>
 
-        <Button onClick={onSubmit} style={{
-            opacity: !answer || submited ? 0.5 : 1,
-            color: 'white',
+    </>
+}
+
+export const Results = (props: { game: GameState }) => {
+    return <FlexLayout style={{ height: '100%', width: '100%', padding: 20, overflowY: 'scroll' }}>
+        {Array.from(props.game.scores.values()).sort((a, b) => b.score - a.score).map(us => {
+            return <FlexLayout style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20 }}>{us.user.name + ': ' + us.score}</FlexLayout>
+        })}
+        <Button style={{
+            backgroundColor: 'transparent',
+            opacity: 0.5,
+            color: 'black',
             fontSize: '22px',
-            background: 'black',
-            position: 'fixed', bottom: 20, right: 20,
+            position: 'fixed',
+            bottom: 20, left: 20,
             borderRadius: 48,
             width: 148,
             height: 48,
-        }}>{submited ? 'ANSWERED' : 'SUBMIT'}</Button>
+            textAlign: 'left'
 
-    </>
+        }}><GameTTL /></Button>
+    </FlexLayout>
 }
 
 export const Game = () => {
     let session = React.useContext(SessionContext);
     let [state, setState] = React.useState<GameState>(session!.game.state);
-    let [timeout, setTimeout] = React.useState(0);
 
-    let aspect = window.innerWidth / (440 + 20);
-    let offset = (310 + 20) * aspect;
+
 
     React.useEffect(() => {
         let dispose = session!.game.listen(s => {
@@ -182,26 +253,9 @@ export const Game = () => {
         return dispose;
     }, [session]);
 
-    React.useEffect(() => {
-        let interval = setInterval(() => {
-            let left = state.ttl - new Date().getTime();
-            setTimeout(left);
-            if (left <= 0) {
-                clearInterval(interval);
-            }
-        }, 100);
-    }, [state.ttl]);
 
     return <>
-        <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll' }} divider={0}>
-            <FlexLayout style={{ height: offset }} divider={0} >
-                {/* <Button onClick={() => {
-                    setState({ ...state, state: state.state === 'question' ? 'subResults' : 'question' })
-                }}> asdasd</Button> */}
-            </FlexLayout>
-            {state.state === 'question' && state.question && <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
-                <Question key={state.question._id} q={state.question} gid={state.id!} />
-            </FlexLayout>}
-        </FlexLayout>
+        {state.state === 'question' && state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
+        {(state.state === 'subResults' || state.state === 'results') && <Results game={state} />}
     </>;
 }

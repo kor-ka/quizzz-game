@@ -43,7 +43,7 @@ let startCountdown = async (sessionId: string) => {
         let ttl = new Date().getTime() + 10000;
         let gid = await startGame(session._id, 10000);
         await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl, gameId: gid } });
-        await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new ObjectId(sessionId), to: 'game' });
+        await WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new ObjectId(sessionId), to: 'game', gid });
     }
 
 }

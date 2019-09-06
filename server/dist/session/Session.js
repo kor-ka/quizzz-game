@@ -35,7 +35,7 @@ let startCountdown = (sessionId) => __awaiter(void 0, void 0, void 0, function* 
         let ttl = new Date().getTime() + 10000;
         let gid = yield Game_1.startGame(session._id, 10000);
         yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl, gameId: gid } });
-        yield WorkQueue_1.WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new mongodb_1.ObjectId(sessionId), to: 'game' });
+        yield WorkQueue_1.WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new mongodb_1.ObjectId(sessionId), to: 'game', gid });
     }
 });
 let stopCountDown = (sessionId) => __awaiter(void 0, void 0, void 0, function* () {

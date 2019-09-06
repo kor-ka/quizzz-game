@@ -1,0 +1,6 @@
+{
+  "name": "quizzz-game",
+  "description": "quizzz-game",
+  "repository": "https://github.com/kor-ka/quizzz-game",
+  "image": "heroku/nodejs"
+}

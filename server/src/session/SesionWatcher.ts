@@ -4,7 +4,6 @@ import { ChangeStream, ObjectId } from "mongodb";
 import { MDBChangeOp } from "../utils/MDBChangeOp";
 import { USERS, User, getUser, toClient } from "../user/User";
 import { Event } from "../entity/events";
-import { Message } from "../entity/messages";
 import { SESSIONS, SESSION_USER, Session, SessionUser } from "./Session";
 
 let sessionWatchers = new Map<string, SessionWatcher>();

@@ -42,9 +42,7 @@ app
   })
 
   .use(async (req, res, next) => {
-    console.warn('here')
     await initMDB();
-    console.warn('here2')
     next();
   })
 

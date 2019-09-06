@@ -57,58 +57,64 @@ export const getCard = () => {
 
     mesh.geometry.center();
 
-    let text = getTextMesh({ width: 440, height: 310, text: 'Q?', fontSize: 750, font: 'Courier', bold: true })
+    let text = getTextMesh({ width: 440, height: 310, text: 'Q?', fontSize: 440, font: 'Courier', bold: true, x: 200, y: -85 })
     mesh.add(text);
     text.position.z = 2;
-    // text.rotation.x = THREE.Math.degToRad(180);
     text.rotation.z = THREE.Math.degToRad(90);
-    // text.position.x += 120;
-
 
     return mesh;
 }
 
-export let wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number, color: string) => {
+export let wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth: number, lineHeight: number, color: string, height: number, padding: number, x?: number, y?: number) => {
     var words = text.split(' ');
     var line = '';
-    var lines = 1;
     context.fillStyle = color;
+
+    let lines: string[] = [];
+    let realWidth = 0;
     for (let n = 0; n < words.length; n++) {
         var testLine = line + words[n] + ' ';
-        var metrics = context.measureText(testLine);
-        var testWidth = metrics.width;
-        if (testWidth > maxWidth && n > 0) {
-            context.fillText(line, x, y);
+        var testMetrics = context.measureText(testLine);
+        if (testMetrics.width > maxWidth - (padding * 2) && n > 0) {
+            // context.fillText(line, x, y);
+            lines.push(line);
             line = words[n] + ' ';
-            y += lineHeight;
-            lines++;
+            var realMetrics = context.measureText(line);
+            realWidth = Math.max(realWidth, realMetrics.width);
         }
         else {
             line = testLine;
         }
     }
-    context.fillText(line || text, x, y);
-    return lines;
+    var realMetrics = context.measureText(line);
+    lines.push(line);
+    realWidth = Math.max(realWidth, realMetrics.width);
+
+
+    let startY = lineHeight + (height - lineHeight * lines.length) / 2 + (y || 0)
+    let startX = (maxWidth - realWidth) / 2 + (x || 0)
+    for (let i = 0; i < lines.length; i++) {
+        context.fillText(lines[i], startX, startY + lineHeight * i);
+    }
 }
-export let getTextMesh = (props: { width: number, height: number, text: string, fontSize: number, padding?: number, color?: string, font?: string, bold?: boolean }) => {
-    let { width, height, text, fontSize, padding, color, font, bold } = props;
+export let getTextMesh = (props: { width: number, height: number, text: string, fontSize: number, padding?: number, color?: string, font?: string, bold?: boolean, x?: number, y?: number }) => {
+    let { width, height, text, fontSize, padding, color, font, bold, x, y } = props;
     padding = padding || 0;
     color = color || 'black';
     font = font || 'Arial';
     let canvas = document.createElement('canvas');
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
+    canvas.width = width * devicePixelRatio;
+    canvas.height = height * devicePixelRatio;
 
     var context = canvas.getContext('2d')!;
-    var maxWidth = (width - padding * 2) * window.devicePixelRatio;
-    var lineHeight = fontSize * 0.4 * window.devicePixelRatio;
-    var x = (canvas.width - maxWidth) / 2;
-    var y = lineHeight + padding
+    context.scale(devicePixelRatio, devicePixelRatio);
+    var maxWidth = width;
+    var lineHeight = fontSize;
     context.font = `${bold ? 'bold' : ''} ${fontSize}px ${font}`;
     // context.fillStyle = '#f9e'
     context.fillStyle = 'rgba(0,0,0,0)'
     context.fillRect(0, 0, 1000, 1000);
-    let lines = wrapText(context, text, x, y, maxWidth, lineHeight, color);
+    wrapText(context, text, maxWidth, lineHeight, color, height, padding, x, y);
 
     var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
@@ -118,12 +124,6 @@ export let getTextMesh = (props: { width: number, height: number, text: string, 
 
     var mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height, 10, 10), material);
     canvas.remove();
-
-    let resHeight = lines * lineHeight;
-
-    if (resHeight < (height - padding * 2)) {
-        mesh.translateX(-((height - padding * 2) - resHeight) / 2)
-    }
 
     return mesh;
 }

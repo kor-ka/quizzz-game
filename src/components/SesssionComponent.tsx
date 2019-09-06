@@ -19,10 +19,10 @@ import { hashCode } from '../utils/hashCode';
 export const SessionComponent = () => {
     return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
         <Scene>
-            <div><DebugSessionStateComponent /></div>
+            {/* <div><DebugSessionStateComponent /></div>
             <div><DebugUsers /></div>
             <FlexLayout style={{ flexGrow: 1 }} />
-            <div><DebugGame /></div>
+            <div><DebugGame /></div> */}
             <SceneRender />
         </Scene>
     </FlexLayout >;
@@ -107,17 +107,32 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     React.useEffect(() => {
         if (props.question!!) {
             if (props.active) {
-                console.log(props.qid, 'animate to active');
 
                 // find position infront of cam
-                let angle = THREE.Math.degToRad(90 - scene.cam.fov / 2);
+                let base = 310 + 20;
+                let vertAngle = THREE.Math.degToRad(90 - scene.cam.fov / 2);
+                let distanceV = base / 2 * Math.tan(vertAngle);
 
-                // todo - respect aspect
-                let distance = (160) * Math.tan(angle);
+                let horisontalBase = (base * scene.cam.aspect) / 2;
+                let horAngle = Math.atan(distanceV / horisontalBase);
+
+                let distanveH = (440 + 20) / 2 * Math.tan(horAngle);
 
                 let mesh = new THREE.Mesh();
                 scene.cam.add(mesh);
-                mesh.translateZ(-distance);
+
+                mesh.translateZ(-Math.max(distanceV, distanveH));
+
+                if (session.isMobile) {
+
+                    let height = 2 * Math.max(distanceV, distanveH) * Math.tan(THREE.Math.degToRad(scene.cam.fov / 2));
+                    // mesh.position.y -= (height - 160) / 2;
+                    mesh.position.y += (height - 310) / 2 - 10;
+                }
+
+
+
+
 
                 let targetPostion = new Vector3();
                 mesh.getWorldPosition(targetPostion);
@@ -125,14 +140,12 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
                 let targetRotation = scene.cam.rotation.clone();
                 targetRotation.z += THREE.Math.degToRad(-90);
                 targetRotation.x += THREE.Math.degToRad(-180);
-                let targetRotationVector = targetRotation.toVector3();
 
+                let targetRotationVector = targetRotation.toVector3();
                 cardAnimatTo({
                     position: targetPostion,
-                    // position: new Vector3(0, 0, 250),
                     pcb: [.34, .24, .18, 1.06],
                     rotation: targetRotationVector,
-                    // rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(-90)),
                     rcb: [.42, 0, .3, 1.01]
                 }, 1000);
 
@@ -149,8 +162,6 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         if (props.question && props.question.text) {
             let text = getTextMesh({
                 width: 440, height: 310,
-                // text: 'Вопро́с — форма мысли, выраженная в основном языке предложением, которое произносят или пишут, когда хотят что-нибудь спросить, то есть получить интересующую информацию.',
-                // text: 'Вопро́с — форма мысли.',
                 text: props.question.text,
                 fontSize: 60,
                 padding: 40
@@ -169,22 +180,46 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         }
     }, [props.question && props.question.text]);
 
-    return <>{JSON.stringify(props)}</>;
+    return <></>;
 
 });
 
 export const GameRender = () => {
     let scene = React.useContext(SceneContext);
     scene.cam.rotation.x = THREE.Math.degToRad(45);
-
     let session = React.useContext(SessionContext);
+
+
+    // if (session!.isMobile) {
+    //     scene.cam.translateY(50);
+    // }
+
 
     let [cards, setCards] = React.useState<{ qid: string, category: string, question?: ClientQuestion, active: boolean }[]>([]);
 
+    // React.useEffect(() => {
+    //     session!.game.listen(gs => {
+    //         setCards(gs.stack);
+    //     });
+    // }, []);
+
+    const reset = React.useCallback(() => {
+        let res = [];
+        for (let i = 0; i < 10; i++) {
+            res.push(
+                {
+                    qid: makeId(),
+                    category: new Date().getTime() + 'test',
+                    active: true,
+                    question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
+                }
+            );
+        }
+        setCards(res);
+    }, []);
+
     React.useEffect(() => {
-        session!.game.listen(gs => {
-            setCards(gs.stack);
-        });
+        reset();
     }, []);
 
     return <>

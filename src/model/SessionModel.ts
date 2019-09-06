@@ -31,12 +31,16 @@ export class SessionModel {
     me?: ClientUser;
     meListeners = new Set<(me: ClientUser) => void>();
 
+    isMobile?: boolean;
+
     game = new GameModel(this);
 
     constructor(id: string) {
         this.id = id;
         this.io = this.init();
         this.myId = Cookie.get('quizzz-game-user')!.split(':')[0];
+
+        this.isMobile = Cookie.get('isMobile') === 'true';
     }
 
     init = () => {

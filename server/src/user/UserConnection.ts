@@ -80,13 +80,14 @@ export class UserConnection {
 
     emit = (event: Event | Event[]) => {
         let events = Array.isArray(event) ? event : [event];
+        console.log('[EMIT]', event)
         this.socket.emit('event', JSON.stringify({ batch: events }));
     }
 
-    close = () => {
+    close = async () => {
         this.socket.disconnect();
         if (this.sessionWatcher) {
-            this.sessionWatcher.removeUserConnection(this);
+            await this.sessionWatcher.removeUserConnection(this);
         }
     }
 }

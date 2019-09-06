@@ -39,6 +39,7 @@ export class SessionWatcher {
 
         // subscribe for updates
         this.sessionWatcher = SESSIONS().watch([{ $match: { 'fullDocument._id': new ObjectId(this.id) } }], { fullDocument: 'updateLookup' });
+        console.log('subscribe')
         this.sessionWatcher.on('change', async (next: MDBChangeOp<Session>) => {
             if (next.operationType === 'update' || next.operationType === 'insert') {
                 this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl, gid: session.gameId && session.gameId.toHexString() });
@@ -63,8 +64,8 @@ export class SessionWatcher {
             if (user && (next.operationType === 'insert' || next.operationType === 'update')) {
                 let active = next.fullDocument.online && next.fullDocument.visible;
                 if (active) {
-                    this.emitAll({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });
                     this.watchUser(next.fullDocument);
+                    this.emitAll({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });
                 } else {
                     this.emitAll({ type: 'SessionUserLeftEvent', sessionId: this.id, user: toClient(user) });
                     let w = this.userWatchers.get(next.fullDocument._id.toHexString());
@@ -86,10 +87,10 @@ export class SessionWatcher {
 
         // notify user about current state
         // users
-        let sessionUsers = await SESSION_USER().find({ sid: this.id, isMobile: true, online: true });
+        let sessionUsers = await SESSION_USER().find({ sid: this.id, visible: true, online: true }).toArray();
 
         let batch: Event[] = [];
-        for (let su of await sessionUsers.toArray()) {
+        for (let su of await sessionUsers) {
             let user = await getUser(su.uid);
             if (user) {
                 batch.push({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });
@@ -107,13 +108,13 @@ export class SessionWatcher {
 
     }
 
-    removeUserConnection = (connection: UserConnection) => {
+    removeUserConnection = async (connection: UserConnection) => {
         this.connections.delete(connection);
         if (this.connections.size === 0) {
             this.dispose();
             sessionWatchers.delete(this.id);
         }
-        SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id, connectionId: connection.id }, { $set: { online: false } });
+        await SESSION_USER().updateOne({ uid: connection.user!._id.toHexString(), sid: this.id, connectionId: connection.id }, { $set: { online: false } });
     }
 
     ////

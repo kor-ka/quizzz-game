@@ -24,12 +24,12 @@ export const SceneRender = () => {
     let scene = React.useContext(SceneContext);
     let [state, setState] = React.useState<'idle' | 'joining' | 'game'>('idle');
 
-
     React.useEffect(() => {
         let sessionState = session.sesssionState;
         let users = session.users;
 
         let update = () => {
+
             if (sessionState.state === 'await' || sessionState.state === 'connecting') {
                 setState(users.size === 0 ? 'idle' : 'joining')
             } else if (sessionState.state === 'countdown') {
@@ -37,6 +37,9 @@ export const SceneRender = () => {
             } else if (sessionState.state === 'game') {
                 setState('game');
             }
+
+            console.warn(sessionState, users);
+
         }
 
 
@@ -59,6 +62,7 @@ export const SceneRender = () => {
     const tojoining = React.useCallback(() => { setState('joining') }, []);
 
     return <>
+        <div style={{ position: 'absolute', top: 0 }}>{state}</div>
         {/* <Idle active={state === 'idle'} /> */}
         {/* <Button style={{ border: state === 'idle' ? '1px solid black' : '' }} onClick={toIdle}>Idle</Button>
         <Button style={{ border: state === 'joining' ? '1px solid black' : '' }} onClick={tojoining}>joining</Button> */}
@@ -117,15 +121,10 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
                 mesh.translateZ(-Math.max(distanceV, distanveH));
 
                 if (session.isMobile) {
-
                     let height = 2 * Math.max(distanceV, distanveH) * Math.tan(THREE.Math.degToRad(scene.cam.fov / 2));
                     // mesh.position.y -= (height - 160) / 2;
                     mesh.position.y += (height - 310) / 2 - 10;
                 }
-
-
-
-
 
                 let targetPostion = new Vector3();
                 mesh.getWorldPosition(targetPostion);

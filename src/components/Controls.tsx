@@ -4,7 +4,7 @@ import { SessionContext } from "../App";
 import { ClientUser } from "../../server/src/user/User";
 import { Button, Input, FlexLayout } from "../ui/ui";
 import { GameState } from "../model/GameModel";
-import { ClientQuestion, answer } from "../../server/src/game/Game";
+import { ClientQuestion } from "../../server/src/game/Game";
 
 
 export const SessionStateComponent = () => {
@@ -165,8 +165,6 @@ export const Game = () => {
     let aspect = window.innerWidth / (440 + 20);
     let offset = (310 + 20) * aspect;
 
-    console.warn(aspect, offset);
-
     React.useEffect(() => {
         let dispose = session!.game.listen(s => {
             setState(s);
@@ -194,7 +192,6 @@ export const Game = () => {
         }, 100);
     }, [state.ttl]);
 
-    // console.warn(state.scores);
     return <>
         <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll' }} divider={0}>
             <FlexLayout style={{ height: offset }} divider={0} >

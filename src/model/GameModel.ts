@@ -45,7 +45,7 @@ export class GameModel {
                 let isCurretn = q.qid === (event.question && event.question._id);
                 console.warn(q.qid, event.question && event.question._id);
                 if (isCurretn) {
-                    return { ...q, question: event.question, active: event.state === 'question' };
+                    return { ...q, question: event.question, active: !q.completed };
                 } else {
                     return { ...q, active: true };
                 }

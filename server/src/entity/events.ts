@@ -40,7 +40,7 @@ export interface GameStateChangedEvent {
     state: GameState;
     ttl?: number;
     question?: ClientQuestion;
-    stack: { qid: string, category: string; }[];
+    stack: { qid: string, category: string; completed: boolean }[];
 }
 
 export interface GameUserGaveAnswer {

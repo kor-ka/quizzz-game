@@ -93,8 +93,8 @@ io.on('connect', async (socket) => {
   console.log('Connected client on port %s.', PORT);
   let listener = new UserConnection(socket);
 
-  socket.on('disconnect', () => {
-    listener.close();
+  socket.on('disconnect', async () => {
+    await listener.close();
   });
 });
 

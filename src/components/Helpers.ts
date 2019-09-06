@@ -78,21 +78,23 @@ export let wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth
         if (testMetrics.width > maxWidth - (padding * 2) && n > 0) {
             // context.fillText(line, x, y);
             lines.push(line);
-            line = words[n] + ' ';
             var realMetrics = context.measureText(line);
             realWidth = Math.max(realWidth, realMetrics.width);
+            line = words[n] + ' ';
+
+
         }
         else {
             line = testLine;
         }
     }
     var realMetrics = context.measureText(line);
+
     lines.push(line);
     realWidth = Math.max(realWidth, realMetrics.width);
 
-
-    let startY = lineHeight + (height - lineHeight * lines.length) / 2 + (y || 0)
-    let startX = (maxWidth - realWidth) / 2 + (x || 0)
+    let startY = lineHeight + (height - lineHeight * lines.length) / 2 + (y || 0);
+    let startX = (maxWidth - realWidth) / 2;
     for (let i = 0; i < lines.length; i++) {
         context.fillText(lines[i], startX, startY + lineHeight * i);
     }

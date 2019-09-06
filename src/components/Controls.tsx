@@ -2,7 +2,7 @@ import * as React from "react";
 import { SessionState } from "../../server/src/session/Session";
 import { SessionContext } from "../App";
 import { ClientUser } from "../../server/src/user/User";
-import { Button, Input } from "../ui/ui";
+import { Button, Input, FlexLayout } from "../ui/ui";
 import { GameState } from "../model/GameModel";
 import { ClientQuestion, answer } from "../../server/src/game/Game";
 
@@ -43,15 +43,24 @@ export const SessionStateComponent = () => {
         session!.io.emit({ type: 'SessionReset', id: session!.id })
     }, [state.state]);
 
-    return <>
-        {JSON.stringify(state)}
-        {state.state === 'countdown' && <div>
-            {state.ttl - new Date().getTime()}
-        </div>}
-        {(state.state === 'await' || state.state === 'countdown') && <Button onClick={startStop} style={{ opacity: loading ? 0.5 : 1 }} >{state.state === 'await' ? 'start' : 'stop'}</Button>}
-        <Button onClick={reset} >RESET</Button>
+    return <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', zIndex: 100 }}>
         <Profile />
-    </>
+
+        {(state.state === 'await' || state.state === 'countdown') &&
+            <Button
+                onClick={startStop}
+                style={{
+                    opacity: loading ? 0.5 : 1,
+                    position: 'fixed',
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    fontSize: 120,
+                }} >
+                {state.state === 'await' ? 'start' : Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000))}
+            </Button>}
+        {/* <Button onClick={reset} >RESET</Button> */}
+    </FlexLayout>
 }
 
 export const Users = () => {
@@ -81,10 +90,7 @@ export const Profile = () => {
         session!.io.emit({ type: 'UserRename', name: event.target.value })
     }, []);
 
-    return <div>
-        me: {JSON.stringify(me)}
-        {me && <Input defaultValue={me.name} onChange={onChange} />}
-    </div>
+    return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20 }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;
 }
 
 
@@ -96,7 +102,10 @@ export const AnswerText = (props: { answers: string[], onPick: (answer: string) 
         props.onPick(answer);
     }, []);
     return <>
-        {props.answers.map((a) => <Button style={{ backgroundColor: a === answer ? 'gray' : 'white' }} onClick={() => onPick(a)}>{a}</Button>)}
+        {props.answers.map((a) => <Button style={{
+            backgroundColor: a === answer ? 'black' : 'white',
+            color: a === answer ? 'white' : 'black',
+        }} onClick={() => onPick(a)}>{a}</Button>)}
     </>
 }
 
@@ -121,7 +130,7 @@ export const Question = (props: { q: ClientQuestion, gid: string }) => {
     let session = React.useContext(SessionContext);
 
     const onSubmit = React.useCallback(() => {
-        if (!answer) {
+        if (!answer || submited) {
             return;
         }
         session!.io.emit({ type: 'Answer', gid: props.gid, answer, qid: props.q._id });
@@ -129,11 +138,21 @@ export const Question = (props: { q: ClientQuestion, gid: string }) => {
     }, [answer]);
     return <>
 
-        <div>{props.q.text}</div>
-        {props.q.open && <AnswerOpen onPick={onPick} />}
-        {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} onPick={onPick} />}
+        <FlexLayout style={{ pointerEvents: submited ? 'none' : 'auto' }} >
+            {props.q.open && <AnswerOpen onPick={onPick} />}
+            {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} onPick={onPick} />}
+        </FlexLayout>
 
-        <Button onClick={onSubmit} style={{ background: answer ? 'green' : 'gray' }}>{submited ? ' ✅SENT' : '🙈SEND'}</Button>
+        <Button onClick={onSubmit} style={{
+            opacity: !answer || submited ? 0.5 : 1,
+            color: 'white',
+            fontSize: '22px',
+            background: 'black',
+            position: 'fixed', bottom: 20, right: 20,
+            borderRadius: 48,
+            width: 148,
+            height: 48,
+        }}>{submited ? 'ANSWERED' : 'SUBMIT'}</Button>
 
     </>
 }
@@ -142,9 +161,25 @@ export const Game = () => {
     let session = React.useContext(SessionContext);
     let [state, setState] = React.useState<GameState>(session!.game.state);
     let [timeout, setTimeout] = React.useState(0);
+
+    let aspect = window.innerWidth / (440 + 20);
+    let offset = (310 + 20) * aspect;
+
+    console.warn(aspect, offset);
+
     React.useEffect(() => {
         let dispose = session!.game.listen(s => {
             setState(s);
+            // setState({
+            //     ...s, question: {
+            //         text: 'wop wop',
+            //         _id: 'asd',
+            //         category: 'asda',
+            //         open: 'text'
+            //         // textAnswers: ['1', ' asd', '12', 'dd asd', '3', '1', ' asd', '12', 'dd asd', '3']
+            //     },
+            //     state: 'question'
+            // });
         });
         return dispose;
     }, [session]);
@@ -161,10 +196,15 @@ export const Game = () => {
 
     // console.warn(state.scores);
     return <>
-        <div>---{state.state}---</div>
-        <div>{timeout}</div>
-
-        <div>{JSON.stringify(Array.from(state.scores))}</div>
-        {state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
+        <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll' }} divider={0}>
+            <FlexLayout style={{ height: offset }} divider={0} >
+                {/* <Button onClick={() => {
+                    setState({ ...state, state: state.state === 'question' ? 'subResults' : 'question' })
+                }}> asdasd</Button> */}
+            </FlexLayout>
+            {state.state === 'question' && state.question && <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
+                <Question key={state.question._id} q={state.question} gid={state.id!} />
+            </FlexLayout>}
+        </FlexLayout>
     </>;
 }

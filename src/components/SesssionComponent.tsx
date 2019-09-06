@@ -1,37 +1,28 @@
 import * as THREE from 'three';
 import * as React from "react";
-import { SessionState } from "../../server/src/session/Session";
 import { SessionContext } from "../App";
-import { ClientUser } from "../../server/src/user/User";
-import { FlexLayout, Button, Input } from "../ui/ui";
-import { GameState } from "../model/GameModel";
-import { ClientQuestion, answer } from "../../server/src/game/Game";
+import { ClientQuestion } from "../../server/src/game/Game";
 import { Scene, SceneContext } from "./Scene";
-import { SessionStateComponent as DebugSessionStateComponent, Users as DebugUsers, Game as DebugGame } from "./DEbugComponents";
-import { getCube, useAddMeshRemove as useAddMesh, getCard, wrapText, getTextMesh } from "./Helpers";
-import { MeshBasicMaterial, Vector3, Mesh } from "three";
-import { Idle } from './Idle';
-import { makeId } from '../utils/makeId';
+import { SessionStateComponent, Game as GameControls } from "./Controls";
+import { getCard, getTextMesh } from "./Helpers";
+import { Vector3 } from "three";
 import { useAnimation } from './useAnimation';
-import { MeshText2D, textAlign } from 'three-text2d';
 import { hashCode } from '../utils/hashCode';
+import { makeId } from '../utils/makeId';
 
 export const SessionComponent = () => {
-    return <FlexLayout style={{ flexDirection: 'column', width: '100%', height: '100%' }}>
+    return <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }} >
         <Scene>
-            {/* <div><DebugSessionStateComponent /></div>
-            <div><DebugUsers /></div>
-            <FlexLayout style={{ flexGrow: 1 }} />
-            <div><DebugGame /></div> */}
             <SceneRender />
         </Scene>
-    </FlexLayout >;
+    </div >
+        ;
 }
 
 export const SceneRender = () => {
     let session = React.useContext(SessionContext)!;
     let scene = React.useContext(SceneContext);
-    let [state, setState] = React.useState<'idle' | 'joining' | 'countdown' | 'game'>('idle');
+    let [state, setState] = React.useState<'idle' | 'joining' | 'game'>('idle');
 
 
     React.useEffect(() => {
@@ -42,7 +33,7 @@ export const SceneRender = () => {
             if (sessionState.state === 'await' || sessionState.state === 'connecting') {
                 setState(users.size === 0 ? 'idle' : 'joining')
             } else if (sessionState.state === 'countdown') {
-                setState('countdown')
+                setState('joining')
             } else if (sessionState.state === 'game') {
                 setState('game');
             }
@@ -71,6 +62,8 @@ export const SceneRender = () => {
         {/* <Idle active={state === 'idle'} /> */}
         {/* <Button style={{ border: state === 'idle' ? '1px solid black' : '' }} onClick={toIdle}>Idle</Button>
         <Button style={{ border: state === 'joining' ? '1px solid black' : '' }} onClick={tojoining}>joining</Button> */}
+        {state === 'joining' && <SessionStateComponent />}
+        {state === 'game' && <GameControls />}
         <GameRender />
     </>
 }
@@ -163,7 +156,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
             let text = getTextMesh({
                 width: 440, height: 310,
                 text: props.question.text,
-                fontSize: 60,
+                fontSize: 40,
                 padding: 40
             });
             card.add(text);
@@ -197,11 +190,11 @@ export const GameRender = () => {
 
     let [cards, setCards] = React.useState<{ qid: string, category: string, question?: ClientQuestion, active: boolean }[]>([]);
 
-    // React.useEffect(() => {
-    //     session!.game.listen(gs => {
-    //         setCards(gs.stack);
-    //     });
-    // }, []);
+    React.useEffect(() => {
+        session!.game.listen(gs => {
+            setCards(gs.stack);
+        });
+    }, []);
 
     const reset = React.useCallback(() => {
         let res = [];
@@ -218,9 +211,9 @@ export const GameRender = () => {
         setCards(res);
     }, []);
 
-    React.useEffect(() => {
-        reset();
-    }, []);
+    // React.useEffect(() => {
+    //     reset();
+    // }, []);
 
     return <>
         {cards.map((c, i) => <GameCard key={c.qid} index={i} {...c} />)}

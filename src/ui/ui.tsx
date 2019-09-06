@@ -66,7 +66,7 @@ const ButtonInner = Glamorous.div<{ type?: 'danger' }>((props) => ({
 
 }));
 
-export const Button = (props: { className?: string, style?: React.CSSProperties, onClick?: () => void, type?: 'danger', children?: any }) => <ButtonInner type={props.type} className={props.className} style={props.style} onClick={props.onClick}><span style={{ marginRight: isChromium ? 0 : 5 }}>{props.children}</span></ButtonInner>
+export const Button = (props: { className?: string, style?: React.CSSProperties, onClick?: () => void, type?: 'danger', children?: any }) => <ButtonInner type={props.type} className={props.className} style={props.style} onClick={props.onClick}>{props.children}</ButtonInner>
 
 export const TextContentStyled = Glamorous.div<{ selected?: boolean }>(
     props => ({

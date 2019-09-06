@@ -18,6 +18,7 @@ export class GameWatcher {
     }
 
     init = async () => {
+
         this.gameWatcher = GAME().watch([{ $match: { 'fullDocument._id': this.id } }], { fullDocument: 'updateLookup' })
         this.gameWatcher.on('change', async (next: MDBChangeOp<Game>) => {
             if (next.operationType === 'update') {
@@ -58,6 +59,7 @@ export class GameWatcher {
         if (this.scoreWatcher) {
             this.scoreWatcher.close();
         }
+        gameWatchers.delete(this.id.toHexString());
     }
 }
 

@@ -63,7 +63,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
 
             var gridHelper = new THREE.GridHelper(100000, 1000);
             gridHelper.rotateX(1.5708);
-            this.scene.add(gridHelper);
+            // this.scene.add(gridHelper);
             this.start()
 
             this.setState({ scene: this.scene, cam: this.cam });

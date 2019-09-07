@@ -3,7 +3,6 @@ import { GAME, Game, QUESTION, toClientQuestion, GAME_USER_SCORE, GameUserScore,
 import { ObjectId } from "bson";
 import { ChangeStream } from "mongodb";
 import { MDBChangeOp } from "../utils/MDBChangeOp";
-import { UserConnection } from "../user/UserConnection";
 import { Event } from "../entity/events";
 import { SESSIONS } from "../session/Session";
 
@@ -31,7 +30,7 @@ export class GameWatcher {
                     scores.map(score => res.push({ type: 'GameScoreChangedEvent', gid: gid.toHexString(), uid: score.uid.toHexString(), score: score.points }));
 
                 }
-                res.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question), stack: questions });
+                res.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question, next.fullDocument.state === 'subResults'), stack: questions });
                 this.session.emitAll(res)
             }
         })
@@ -47,7 +46,7 @@ export class GameWatcher {
         let scores = await GAME_USER_SCORE().find({ gid: gid }).toArray();
         let batch: Event[] = [];
 
-        batch.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: game.state, ttl: game.stateTtl, question: question && toClientQuestion(question), stack: questions })
+        batch.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: game.state, ttl: game.stateTtl, question: question && toClientQuestion(question, game.state === 'subResults'), stack: questions })
         for (let score of scores) {
             batch.push({ type: 'GameScoreChangedEvent', gid: gid.toHexString(), uid: score.uid.toHexString(), score: score.points });
         }

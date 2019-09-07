@@ -94,30 +94,35 @@ export const Profile = () => {
 }
 
 
-export const AnswerText = (props: { answers: string[], onPick: (answer: string) => void }) => {
-    const [answer, setAnsser] = React.useState<string>();
+export const AnswerText = (props: { answers: string[], correctAnswer?: string, onPick: (answer: string) => void }) => {
+    const [pickedAnswer, setAnsser] = React.useState<string>();
 
     const onPick = React.useCallback((answer: string) => {
-        setAnsser(answer);
+        setAnsser(answer.toLowerCase());
         props.onPick(answer);
     }, []);
+
     return <>
         {props.answers.map((a) => <Button style={{
-            backgroundColor: a === answer ? 'black' : 'white',
-            color: a === answer ? 'white' : 'black',
+            backgroundColor: a !== pickedAnswer ? 'white' :
+                (props.correctAnswer === undefined ? 'black' :
+                    (a === props.correctAnswer ? 'limegreen' : 'maroon')),
+            color: a === pickedAnswer ? 'white' : 'black',
         }} onClick={() => onPick(a)}>{a}</Button>)}
     </>
 }
 
-export const AnswerOpen = (props: { onPick: (answer: string) => void }) => {
+export const AnswerOpen = (props: { correctAnswer?: string, onPick: (answer: string) => void }) => {
     const [answer, setAnsser] = React.useState<string>();
     const onPick = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         let a = event.target.value;
-        setAnsser(a);
+        setAnsser(a.toLowerCase());
         props.onPick(a);
     }, []);
+    let borderColor = props.correctAnswer === undefined ? 'black' :
+        props.correctAnswer === answer ? 'limegreen' : 'maroon';
     return <>
-        <Input style={{ border: '1px solid black', borderRadius: 8 }} onChange={onPick} />
+        <Input style={{ border: `1px solid ${borderColor}`, borderRadius: 8 }} onChange={onPick} />
     </>
 }
 
@@ -174,8 +179,8 @@ export const Question = (props: { q: ClientQuestion, gid: string }) => {
             </FlexLayout>
             <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
                 <FlexLayout style={{ pointerEvents: submited ? 'none' : 'auto' }} >
-                    {props.q.open && <AnswerOpen onPick={onPick} />}
-                    {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} onPick={onPick} />}
+                    {props.q.open && <AnswerOpen correctAnswer={props.q.answer} onPick={onPick} />}
+                    {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} correctAnswer={props.q.answer} onPick={onPick} />}
                 </FlexLayout>
 
                 <Button onClick={onSubmit} style={{

@@ -36,8 +36,6 @@ export class GameModel {
         this.listeners.forEach(l => l(this.state));
     }
 
-
-    // TOOD create separate game states?
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         if (event.type === 'GameStateChangedEvent') {
             if (this.session.sesssionState.state !== 'game' && event.state === 'question') {
@@ -52,8 +50,18 @@ export class GameModel {
                     return { ...q, active: true };
                 }
             });
-            this.setState({ id: event.gid, question: event.question, state: event.state, ttl: event.ttl || 0, stack });
+            let targetState = event.state;
+            if (targetState === 'subResults') {
+                targetState = 'question';
+                setTimeout(() => {
+                    this.setState({ state: event.state });
+                    this.notify();
+                }, 2000);
+            }
+            this.setState({ id: event.gid, question: event.question, state: targetState, ttl: event.ttl || 0, stack });
+
             notifyers.add(this.notify);
+
         } else if (event.type === 'GameScoreChangedEvent') {
             let user = this.session.users.get(event.uid);
             if (user) {
@@ -61,6 +69,7 @@ export class GameModel {
                 this.setState({ scores: new Map(this.state.scores) });
             }
             notifyers.add(this.notify);
+
         }
     }
 

@@ -27,7 +27,7 @@ class GameWatcher {
                         let scores = yield Game_1.GAME_USER_SCORE().find({ gid }).toArray();
                         scores.map(score => res.push({ type: 'GameScoreChangedEvent', gid: gid.toHexString(), uid: score.uid.toHexString(), score: score.points }));
                     }
-                    res.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
+                    res.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question, next.fullDocument.state === 'subResults'), stack: questions });
                     this.session.emitAll(res);
                 }
             }));
@@ -41,7 +41,7 @@ class GameWatcher {
             let questions = (yield Game_1.GAME_QUESTION().find({ gid: gid, completed: false }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
             let scores = yield Game_1.GAME_USER_SCORE().find({ gid: gid }).toArray();
             let batch = [];
-            batch.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: game.state, ttl: game.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
+            batch.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: game.state, ttl: game.stateTtl, question: question && Game_1.toClientQuestion(question, game.state === 'subResults'), stack: questions });
             for (let score of scores) {
                 batch.push({ type: 'GameScoreChangedEvent', gid: gid.toHexString(), uid: score.uid.toHexString(), score: score.points });
             }

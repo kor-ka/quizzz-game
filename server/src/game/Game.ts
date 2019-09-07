@@ -55,15 +55,17 @@ export interface ClientQuestion {
     text: string;
     textAnswers?: string[];
     open?: 'text' | 'number';
+    answer?: string;
 }
 
-export const toClientQuestion = (question: Question): ClientQuestion => {
+export const toClientQuestion = (question: Question, showAnswer: boolean): ClientQuestion => {
     return {
         _id: question._id.toHexString(),
         category: question.category,
         text: question.text,
         textAnswers: question.textAnswers,
-        open: question.open !== 'false' ? question.open : undefined
+        open: question.open !== 'false' ? question.open : undefined,
+        answer: showAnswer ? question.answer.toLowerCase() : undefined
     }
 }
 

@@ -13,13 +13,14 @@ const bson_1 = require("bson");
 const MDB_1 = require("../MDB");
 const WorkQueue_1 = require("../workQueue/WorkQueue");
 const Session_1 = require("../session/Session");
-exports.toClientQuestion = (question) => {
+exports.toClientQuestion = (question, showAnswer) => {
     return {
         _id: question._id.toHexString(),
         category: question.category,
         text: question.text,
         textAnswers: question.textAnswers,
-        open: question.open !== 'false' ? question.open : undefined
+        open: question.open !== 'false' ? question.open : undefined,
+        answer: showAnswer ? question.answer.toLowerCase() : undefined
     };
 };
 exports.GAME = () => MDB_1.MDB.collection('games');

@@ -62,7 +62,7 @@ export const SceneRender = () => {
     const tojoining = React.useCallback(() => { setState('joining') }, []);
 
     return <>
-        <div style={{ position: 'absolute', top: 0 }}>{state}</div>
+        {/* <div style={{ position: 'absolute', top: 0 }}>{state}</div> */}
         {/* <Idle active={state === 'idle'} /> */}
         {/* <Button style={{ border: state === 'idle' ? '1px solid black' : '' }} onClick={toIdle}>Idle</Button>
         <Button style={{ border: state === 'joining' ? '1px solid black' : '' }} onClick={tojoining}>joining</Button> */}

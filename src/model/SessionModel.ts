@@ -7,6 +7,8 @@ import { Event } from '../../server/src/entity/events';
 import { GameModel } from './GameModel';
 export const endpoint = window.location.hostname.indexOf('localhost') >= 0 ? 'http://localhost:5000' : '';
 
+export type ClientUserIndexed = ClientUser & { index: number };
+
 class Emitter {
     socket: SocketIOClient.Socket;
     constructor(socket: SocketIOClient.Socket) {
@@ -21,8 +23,8 @@ export class SessionModel {
     id: string;
     io: Emitter;
 
-    users = new Map<string, ClientUser>();
-    usersListeners = new Set<(users: Map<string, ClientUser>) => void>();
+    users = new Map<string, ClientUserIndexed>();
+    usersListeners = new Set<(users: Map<string, ClientUserIndexed & { index: number }>) => void>();
 
     sesssionState: { state: SessionState | 'connecting', ttl: number } = { state: 'connecting', ttl: 0 };
     sesssionStateListeners = new Set<(sessionState: { state: SessionState | 'connecting', ttl: number }) => void>();
@@ -65,14 +67,16 @@ export class SessionModel {
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         console.log('[event]', event);
         if (event.type === 'UserUpdatedEvent') {
-            this.users.set(event.user._id, event.user);
+            let current = this.users.get(event.user._id);
+            this.users.set(event.user._id, { ...event.user, index: current ? current.index : this.users.size });
             notifyers.add(this.notifyUser);
             if (event.user._id === this.myId) {
                 this.me = event.user;
                 notifyers.add(this.notifyMeUser);
             }
         } else if (event.type === 'SessionUserJoinedEvent') {
-            this.users.set(event.user._id, event.user);
+            let current = this.users.get(event.user._id);
+            this.users.set(event.user._id, { ...event.user, index: current ? current.index : this.users.size });
             if (event.user._id === this.myId) {
                 this.me = event.user;
                 notifyers.add(this.notifyMeUser);
@@ -103,7 +107,7 @@ export class SessionModel {
     // io
     ////
 
-    subscribeUsers = (listener: (users: Map<string, ClientUser>) => void) => {
+    subscribeUsers = (listener: (users: Map<string, ClientUserIndexed>) => void) => {
         this.usersListeners.add(listener);
         listener(this.users);
         return () => {

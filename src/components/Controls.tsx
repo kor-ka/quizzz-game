@@ -43,7 +43,7 @@ export const SessionStateComponent = () => {
         session!.io.emit({ type: 'SessionReset', id: session!.id })
     }, [state.state]);
 
-    return <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', zIndex: 100 }}>
+    return <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', zIndex: 100 }} divider={0}>
         <Profile />
 
         {(state.state === 'await' || state.state === 'countdown') &&
@@ -90,7 +90,7 @@ export const Profile = () => {
         session!.io.emit({ type: 'UserRename', name: event.target.value })
     }, []);
 
-    return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20 }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;
+    return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)' }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;
 }
 
 

@@ -2,12 +2,15 @@ import * as THREE from 'three';
 import * as React from "react";
 import { Scene, SceneContext } from "./Scene";
 import BezierEasing from 'bezier-easing';
+import { PerspectiveCamera } from 'three';
+
+export const IN_OUT = [.42, 0, .58, 1] as [number, number, number, number];
 
 export const interpolate = (from: number, to: number, i: number) => {
     return (from + (to - from) * i);
 }
 
-export const useAnimation = (mesh: THREE.Mesh) => {
+export const useAnimation = (mesh: THREE.Mesh | PerspectiveCamera) => {
 
     let scene = React.useContext(SceneContext);
 

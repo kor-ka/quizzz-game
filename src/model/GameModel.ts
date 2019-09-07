@@ -40,7 +40,7 @@ export class GameModel {
     // TOOD create separate game states?
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         if (event.type === 'GameStateChangedEvent') {
-            if (this.state.state === 'wait' && event.state === 'question') {
+            if (this.session.sesssionState.state !== 'game' && event.state === 'question') {
                 this.session.onGameStarted();
             }
             event.stack.reverse();

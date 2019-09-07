@@ -21,7 +21,7 @@ class GameWatcher {
                     let res = [];
                     if (next.fullDocument.state === 'subResults') {
                         let scores = yield Game_1.GAME_USER_SCORE().find({ gid: this.id }).toArray();
-                        scores.map(score => ({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points }));
+                        scores.map(score => res.push({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points }));
                     }
                     res.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
                     this.session.emitAll(res);

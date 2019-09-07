@@ -5,6 +5,7 @@ import { FlexLayout } from "../ui/ui";
 export const isChromium = (window as any).chrome;
 
 export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: () => void) => () => void }>({} as any);
+export const minSceneCamZ = 500;
 
 export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: THREE.PerspectiveCamera }> {
     ref = React.createRef<HTMLDivElement>();
@@ -12,7 +13,6 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
     cam?: THREE.PerspectiveCamera;
     renderer?: THREE.WebGLRenderer;
     frameId?: number;
-    minSceneCamZ = 500;
 
     tickListeners = new Set<() => void>();
     constructor(props: any) {
@@ -43,8 +43,9 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
                 // so bad
                 Number.MAX_SAFE_INTEGER
             )
-            this.cam.position.z = this.minSceneCamZ;
+            this.cam.position.z = minSceneCamZ;
             this.cam.position.y = -500;
+            this.cam.rotation.x = THREE.Math.degToRad(45);
 
             const color = 0xFFFFFF;
             const intensity = 1;
@@ -62,7 +63,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
 
             var gridHelper = new THREE.GridHelper(100000, 1000);
             gridHelper.rotateX(1.5708);
-            // this.scene.add(gridHelper);
+            this.scene.add(gridHelper);
             this.start()
 
             this.setState({ scene: this.scene, cam: this.cam });
@@ -98,7 +99,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
                     style={{ width: window.innerWidth, height: window.innerHeight }}
                     ref={this.ref}
                 />
-                <FlexLayout style={{ width: '100%', height: '100%', position: 'absolute' }}>
+                <FlexLayout style={{ width: '100%', height: '100%', position: 'absolute' }} divider={0}>
                     {this.state.cam && this.state.scene && this.props.children}
                 </FlexLayout>
             </SceneContext.Provider>

@@ -59,7 +59,7 @@ export const getCard = () => {
 
     let text = getTextMesh({ width: 440, height: 310, text: 'Q?', fontSize: 440, font: 'Courier', bold: true, x: 200, y: -85 })
     mesh.add(text);
-    text.position.z = 2;
+    text.position.z = 3;
     text.rotation.z = THREE.Math.degToRad(90);
 
     return mesh;

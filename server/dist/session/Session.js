@@ -43,6 +43,9 @@ let stopCountDown = (sessionId) => __awaiter(void 0, void 0, void 0, function* (
     if (session && session.state === 'countdown') {
         yield WorkQueue_1.WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', to: 'game', sid: new mongodb_1.ObjectId(sessionId) });
         yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(session._id) }, { $set: { state: 'await', stateTtl: 0 } });
+        if (session.gameId) {
+            yield WorkQueue_1.WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', gid: session.gameId });
+        }
     }
 });
 let reset = (sessionId) => __awaiter(void 0, void 0, void 0, function* () {

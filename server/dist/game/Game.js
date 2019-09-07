@@ -28,7 +28,7 @@ exports.GAME_USER_ANSWER = () => MDB_1.MDB.collection('game_user_answer');
 exports.GAME_USER_SCORE = () => MDB_1.MDB.collection('game_user_score');
 exports.startGame = (sid, after) => __awaiter(void 0, void 0, void 0, function* () {
     // TODO: filter user known questions
-    let questions = yield exports.QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
+    let questions = yield exports.QUESTION().aggregate([{ $sample: { size: 10 } }]).toArray();
     let ttl = new Date().getTime() + after;
     let qid = questions[0]._id;
     let gid = (yield exports.GAME().insertOne({ state: 'wait', stateTtl: ttl, sid })).insertedId;
@@ -75,7 +75,7 @@ exports.moveToState = (args) => __awaiter(void 0, void 0, void 0, function* () {
     }
     else if (args.to === 'results') {
         // update state
-        let stateTtl = new Date().getTime() + 20000;
+        let stateTtl = new Date().getTime() + 5000;
         yield exports.GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.gid } });
         // reset session state
         let game = yield exports.GAME().findOne({ _id: args.gid });

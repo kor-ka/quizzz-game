@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Message } from "../entity/messages";
 import { MDB } from "../MDB";
-import { SessionChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
+import { SessionChangeState, WORK_QUEUE_SESSION, WORK_QUEUE_GAME } from "../workQueue/WorkQueue";
 import { startGame } from "../game/Game";
 
 export type SessionState = 'await' | 'countdown' | 'game'
@@ -53,6 +53,9 @@ let stopCountDown = async (sessionId: string) => {
     if (session && session.state === 'countdown') {
         await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', to: 'game', sid: new ObjectId(sessionId) })
         await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await', stateTtl: 0 } });
+        if (session.gameId) {
+            await WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', gid: session.gameId });
+        }
     }
 }
 

@@ -77,7 +77,7 @@ export let GAME_USER_SCORE = () => MDB.collection<GameUserScore>('game_user_scor
 export const startGame = async (sid: ObjectId, after: number) => {
 
     // TODO: filter user known questions
-    let questions = await QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
+    let questions = await QUESTION().aggregate([{ $sample: { size: 10 } }]).toArray();
 
     let ttl = new Date().getTime() + after;
     let qid = questions[0]._id;
@@ -128,7 +128,7 @@ export const moveToState = async (args: GameChangeState) => {
 
     } else if (args.to === 'results') {
         // update state
-        let stateTtl = new Date().getTime() + 20000;
+        let stateTtl = new Date().getTime() + 5000;
         await GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.gid } });
 
         // reset session state

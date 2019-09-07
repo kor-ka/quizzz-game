@@ -24,17 +24,16 @@ export class GameWatcher {
             if (next.operationType === 'update') {
                 let question = await QUESTION().findOne({ _id: next.fullDocument.qid });
                 let questions = (await GAME_QUESTION().find({ gid: next.fullDocument._id }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
-                this.session.emitAll({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question), stack: questions })
+
+                let res: Event[] = [];
+                if (next.fullDocument.state === 'subResults') {
+                    let scores = await GAME_USER_SCORE().find({ gid: this.id }).toArray();
+                    scores.map(score => ({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points }));
+                }
+                res.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && toClientQuestion(question), stack: questions });
+                this.session.emitAll(res)
             }
         })
-
-        this.scoreWatcher = GAME_USER_SCORE().watch([{ $match: { 'fullDocument.gid': this.id } }], { fullDocument: 'updateLookup' })
-        this.scoreWatcher.on('change', async (next: MDBChangeOp<GameUserScore>) => {
-            if (next.operationType === 'update' || next.operationType === 'insert') {
-                this.session.emitAll({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: next.fullDocument.uid.toHexString(), score: next.fullDocument.points });
-            }
-        })
-
         this.session.emitAll(await this.getFullState());
     }
 

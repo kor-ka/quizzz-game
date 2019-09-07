@@ -20,7 +20,7 @@ export let getSessionWatcher = async (id: string) => {
 
 export class SessionWatcher {
     sessionWatcher?: ChangeStream;
-    gameWatcher?: GameWatcher;
+    gameWatcher: GameWatcher;
     connections = new Set<UserConnection>();
     id: string;
     sessionUsersWatcher?: ChangeStream;
@@ -32,29 +32,16 @@ export class SessionWatcher {
 
 
     init = async () => {
-        let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
-        if (session.gameId) {
-            this.gameWatcher = await getGameWatcher(session.gameId, this);
-        }
+        this.gameWatcher = await getGameWatcher(this);
 
         // subscribe for updates
         this.sessionWatcher = SESSIONS().watch([{ $match: { 'fullDocument._id': new ObjectId(this.id) } }], { fullDocument: 'updateLookup' });
         console.log('subscribe')
         this.sessionWatcher.on('change', async (next: MDBChangeOp<Session>) => {
             if (next.operationType === 'update' || next.operationType === 'insert') {
-                this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl, gid: session.gameId && session.gameId.toHexString() });
-
-                if (this.gameWatcher && (!next.fullDocument.gameId || !this.gameWatcher.id.equals(next.fullDocument.gameId))) {
-                    this.gameWatcher.dispose();
-                }
-                if (next.fullDocument.gameId && (!this.gameWatcher || !this.gameWatcher.id.equals(next.fullDocument.gameId))) {
-                    this.gameWatcher = await getGameWatcher(next.fullDocument.gameId, this);
-                }
+                this.emitAll({ type: 'SessionStateChangedEvent', state: next.fullDocument.state, sessionId: this.id, ttl: next.fullDocument.stateTtl, gid: next.fullDocument.gameId && next.fullDocument.gameId.toHexString() });
             }
         });
-
-        let sessionUsers = await SESSION_USER().find({ sid: this.id });
-        sessionUsers.map(this.watchUser);
 
         // detect user list changes
         this.sessionUsersWatcher = SESSION_USER().watch([{ $match: { 'fullDocument.sid': this.id } }], { fullDocument: 'updateLookup' });
@@ -100,9 +87,10 @@ export class SessionWatcher {
         let session = await SESSIONS().findOne({ _id: new ObjectId(this.id) });
         batch.push({ type: 'SessionStateChangedEvent', sessionId: this.id, state: session!.state, ttl: session!.stateTtl, gid: session.gameId && session.gameId.toHexString() })
 
-        if (this.gameWatcher) {
-            batch.push(...await this.gameWatcher.getFullState())
+        if (session.gameId) {
+            batch.push(...await this.gameWatcher.getFullState(session.gameId));
         }
+
         connection.emit(batch);
 
     }

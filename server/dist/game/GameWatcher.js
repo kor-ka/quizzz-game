@@ -10,34 +10,40 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Game_1 = require("./Game");
+const bson_1 = require("bson");
+const Session_1 = require("../session/Session");
 class GameWatcher {
-    constructor(id, session) {
+    constructor(session) {
         this.init = () => __awaiter(this, void 0, void 0, function* () {
-            this.gameWatcher = Game_1.GAME().watch([{ $match: { 'fullDocument._id': this.id } }], { fullDocument: 'updateLookup' });
+            let session = yield Session_1.SESSIONS().findOne({ _id: new bson_1.ObjectId(this.session.id) });
+            this.gameWatcher = Game_1.GAME().watch([{ $match: { 'fullDocument.sid': new bson_1.ObjectId(this.session.id) } }], { fullDocument: 'updateLookup' });
             this.gameWatcher.on('change', (next) => __awaiter(this, void 0, void 0, function* () {
-                if (next.operationType === 'update') {
+                let gid = next.fullDocument._id;
+                if (next.operationType === 'update' || next.operationType === 'insert') {
                     let question = yield Game_1.QUESTION().findOne({ _id: next.fullDocument.qid });
-                    let questions = (yield Game_1.GAME_QUESTION().find({ gid: next.fullDocument._id }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
+                    let questions = (yield Game_1.GAME_QUESTION().find({ gid }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
                     let res = [];
                     if (next.fullDocument.state === 'subResults') {
-                        let scores = yield Game_1.GAME_USER_SCORE().find({ gid: this.id }).toArray();
-                        scores.map(score => res.push({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points }));
+                        let scores = yield Game_1.GAME_USER_SCORE().find({ gid }).toArray();
+                        scores.map(score => res.push({ type: 'GameScoreChangedEvent', gid: gid.toHexString(), uid: score.uid.toHexString(), score: score.points }));
                     }
-                    res.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
+                    res.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
                     this.session.emitAll(res);
                 }
             }));
-            this.session.emitAll(yield this.getFullState());
+            if (session && session.gameId) {
+                this.session.emitAll(yield this.getFullState(session.gameId));
+            }
         });
-        this.getFullState = () => __awaiter(this, void 0, void 0, function* () {
-            let game = yield Game_1.GAME().findOne({ _id: this.id });
+        this.getFullState = (gid) => __awaiter(this, void 0, void 0, function* () {
+            let game = yield Game_1.GAME().findOne({ _id: gid });
             let question = yield Game_1.QUESTION().findOne({ _id: game.qid });
-            let questions = (yield Game_1.GAME_QUESTION().find({ gid: this.id, completed: false }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
-            let scores = yield Game_1.GAME_USER_SCORE().find({ gid: this.id }).toArray();
+            let questions = (yield Game_1.GAME_QUESTION().find({ gid: gid, completed: false }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
+            let scores = yield Game_1.GAME_USER_SCORE().find({ gid: gid }).toArray();
             let batch = [];
-            batch.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: game.state, ttl: game.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
+            batch.push({ type: 'GameStateChangedEvent', gid: gid.toHexString(), state: game.state, ttl: game.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
             for (let score of scores) {
-                batch.push({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points });
+                batch.push({ type: 'GameScoreChangedEvent', gid: gid.toHexString(), uid: score.uid.toHexString(), score: score.points });
             }
             return batch;
         });
@@ -48,20 +54,19 @@ class GameWatcher {
             if (this.scoreWatcher) {
                 this.scoreWatcher.close();
             }
-            gameWatchers.delete(this.id.toHexString());
+            gameWatchers.delete(this.session.id);
         };
-        this.id = id;
         this.session = session;
     }
 }
 exports.GameWatcher = GameWatcher;
 const gameWatchers = new Map();
-exports.getGameWatcher = (id, session) => __awaiter(void 0, void 0, void 0, function* () {
-    let gw = gameWatchers.get(id.toHexString());
+exports.getGameWatcher = (session) => __awaiter(void 0, void 0, void 0, function* () {
+    let gw = gameWatchers.get(session.id);
     if (!gw) {
-        gw = new GameWatcher(id, session);
+        gw = new GameWatcher(session);
         yield gw.init();
-        gameWatchers.set(id.toHexString(), gw);
+        gameWatchers.set(session.id, gw);
     }
     return gw;
 });

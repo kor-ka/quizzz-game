@@ -19,7 +19,7 @@ interface Question {
     category: string;
     text: string;
     textAnswers: string[];
-    open?: 'text' | 'number';
+    open?: 'text' | 'number' | 'false';
     answer: string;
 }
 
@@ -63,7 +63,7 @@ export const toClientQuestion = (question: Question): ClientQuestion => {
         category: question.category,
         text: question.text,
         textAnswers: question.textAnswers,
-        open: question.open
+        open: question.open !== 'false' ? question.open : undefined
     }
 }
 

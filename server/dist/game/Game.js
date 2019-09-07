@@ -18,7 +18,7 @@ exports.toClientQuestion = (question) => {
         category: question.category,
         text: question.text,
         textAnswers: question.textAnswers,
-        open: question.open
+        open: question.open !== 'false' ? question.open : undefined
     };
 };
 exports.GAME = () => MDB_1.MDB.collection('games');

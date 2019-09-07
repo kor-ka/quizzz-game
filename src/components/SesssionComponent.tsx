@@ -80,10 +80,11 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     let { to: cardAnimatTo } = useAnimation(card);
     React.useEffect(() => {
 
-
+        // position above target place
         card.position.z = props.index * 6 + 700;
         card.rotation.z = THREE.Math.degToRad(-45);
 
+        // shake stack
         let positionTremor = 10;
         let xTremor = hashCode(props.qid + 'x') % positionTremor - positionTremor / 2;
         card.position.x += xTremor;
@@ -94,6 +95,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         let zTremor = hashCode(props.qid + 'z') % rotationTremor - rotationTremor / 2;
         card.rotation.z += zTremor;
 
+        // drop to target position
         let targetPostion = card.position.clone();
         targetPostion.z -= 700;
         cardAnimatTo({ position: targetPostion, pcb: [.74, .08, .89, .78] }, 500)

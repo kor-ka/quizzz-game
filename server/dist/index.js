@@ -63,7 +63,7 @@ app
         }
     }
     let u = yield User_1.createUser();
-    res.cookie('quizzz-game-user', `${u.id}:${u.token}`);
+    res.cookie('quizzz-game-user', `${u.id}:${u.token}`, { expires: notSoSoon });
     next();
 }))
     .get('/', (req, res) => {

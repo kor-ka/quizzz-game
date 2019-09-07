@@ -58,7 +58,7 @@ app
       }
     }
     let u = await createUser();
-    res.cookie('quizzz-game-user', `${u.id}:${u.token}`);
+    res.cookie('quizzz-game-user', `${u.id}:${u.token}`, { expires: notSoSoon });
     next();
   })
 

@@ -2,7 +2,7 @@ import { ObjectId } from "bson";
 import { MDB } from "../MDB";
 import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
 import { Message } from "../entity/messages";
-import { promises } from "fs";
+import { onGameStarted } from "../session/Session";
 
 export type GameState = 'wait' | 'question' | 'subResults' | 'results';
 
@@ -119,6 +119,8 @@ export const moveToState = async (args: GameChangeState) => {
         }
 
     } else if (args.to === 'question') {
+        let session = (await GAME().findOne(args.gid))!.sid;
+        await onGameStarted(session);
         // update state
         let stateTtl = new Date().getTime() + 20000;
         await GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.qid } });

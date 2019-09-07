@@ -35,7 +35,6 @@ let startCountdown = (sessionId) => __awaiter(void 0, void 0, void 0, function* 
         let ttl = new Date().getTime() + 10000;
         let gid = yield Game_1.startGame(session._id, 10000);
         yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl, gameId: gid } });
-        yield WorkQueue_1.WORK_QUEUE_SESSION().insertOne({ type: 'SessionChangeState', ttl, sid: new mongodb_1.ObjectId(sessionId), to: 'game', gid });
     }
 });
 let stopCountDown = (sessionId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -53,10 +52,8 @@ let reset = (sessionId) => __awaiter(void 0, void 0, void 0, function* () {
     yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(sessionId) }, { $set: { state: 'await', stateTtl: 0, gameId: null } });
 });
 exports.moveToState = (to) => __awaiter(void 0, void 0, void 0, function* () {
-    if (to.to === 'game') {
-        yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
-    }
-    else {
-        yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
-    }
+    yield exports.SESSIONS().updateOne({ _id: new mongodb_1.ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
+});
+exports.onGameStarted = (sid) => __awaiter(void 0, void 0, void 0, function* () {
+    yield exports.SESSIONS().update({ _id: sid, state: 'countdown' }, { $set: { state: 'game' } });
 });

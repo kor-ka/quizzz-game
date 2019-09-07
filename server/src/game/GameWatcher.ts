@@ -5,6 +5,7 @@ import { ChangeStream } from "mongodb";
 import { MDBChangeOp } from "../utils/MDBChangeOp";
 import { UserConnection } from "../user/UserConnection";
 import { Event } from "../entity/events";
+import { SESSIONS } from "../session/Session";
 
 export class GameWatcher {
     id: ObjectId;

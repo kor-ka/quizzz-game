@@ -53,7 +53,6 @@ export class SessionWatcher {
             }
         });
 
-
         let sessionUsers = await SESSION_USER().find({ sid: this.id });
         sessionUsers.map(this.watchUser);
 

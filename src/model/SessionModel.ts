@@ -84,12 +84,19 @@ export class SessionModel {
         } else if (event.type === 'SessionStateChangedEvent') {
             this.sesssionState = { state: event.state, ttl: event.ttl || 0 };
             notifyers.add(this.notifyState);
-            if (event.state === 'countdown') {
+            if (event.state === 'await') {
                 this.game.reset();
             }
         }
 
         this.game.handleEvent(event, notifyers);
+    }
+
+    onGameStarted = () => {
+        if (this.sesssionState.state === 'countdown') {
+            this.sesssionState = { state: 'game', ttl: 0 };
+            this.notifyState();
+        }
     }
 
     ////

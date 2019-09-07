@@ -178,7 +178,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         }
     }, [props.question && props.question.text]);
 
-    return <></>;
+    return <div style={{ display: 'none' }} />;
 
 });
 

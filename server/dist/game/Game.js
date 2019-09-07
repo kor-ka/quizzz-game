@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bson_1 = require("bson");
 const MDB_1 = require("../MDB");
 const WorkQueue_1 = require("../workQueue/WorkQueue");
+const Session_1 = require("../session/Session");
 exports.toClientQuestion = (question) => {
     return {
         _id: question._id.toHexString(),
@@ -67,6 +68,8 @@ exports.moveToState = (args) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     else if (args.to === 'question') {
+        let session = (yield exports.GAME().findOne(args.gid)).sid;
+        yield Session_1.onGameStarted(session);
         // update state
         let stateTtl = new Date().getTime() + 20000;
         yield exports.GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.qid } });

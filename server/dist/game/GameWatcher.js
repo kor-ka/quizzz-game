@@ -18,13 +18,13 @@ class GameWatcher {
                 if (next.operationType === 'update') {
                     let question = yield Game_1.QUESTION().findOne({ _id: next.fullDocument.qid });
                     let questions = (yield Game_1.GAME_QUESTION().find({ gid: next.fullDocument._id }).toArray()).map(q => ({ qid: q.qid.toHexString(), category: q.categoty, completed: q.completed }));
-                    this.session.emitAll({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
-                }
-            }));
-            this.scoreWatcher = Game_1.GAME_USER_SCORE().watch([{ $match: { 'fullDocument.gid': this.id } }], { fullDocument: 'updateLookup' });
-            this.scoreWatcher.on('change', (next) => __awaiter(this, void 0, void 0, function* () {
-                if (next.operationType === 'update' || next.operationType === 'insert') {
-                    this.session.emitAll({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: next.fullDocument.uid.toHexString(), score: next.fullDocument.points });
+                    let res = [];
+                    if (next.fullDocument.state === 'subResults') {
+                        let scores = yield Game_1.GAME_USER_SCORE().find({ gid: this.id }).toArray();
+                        scores.map(score => ({ type: 'GameScoreChangedEvent', gid: this.id.toHexString(), uid: score.uid.toHexString(), score: score.points }));
+                    }
+                    res.push({ type: 'GameStateChangedEvent', gid: this.id.toHexString(), state: next.fullDocument.state, ttl: next.fullDocument.stateTtl, question: question && Game_1.toClientQuestion(question), stack: questions });
+                    this.session.emitAll(res);
                 }
             }));
             this.session.emitAll(yield this.getFullState());

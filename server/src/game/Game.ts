@@ -155,7 +155,7 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
     if (game && game.qid && question) {
         let points = 1;
         points *= game.qid.equals(q) ? 1 : 0;
-        points *= (question.answer === answer) ? 1 : 0;
+        points *= (question.answer.toLowerCase() === answer.toLowerCase()) ? 1 : 0;
         await GAME_USER_ANSWER().insertOne({ gid: g, qid: q, uid: u, answer, points });
     }
 }

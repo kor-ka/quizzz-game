@@ -48,7 +48,8 @@ export class SessionWatcher {
         this.sessionUsersWatcher.on('change', async (next: MDBChangeOp<SessionUser>) => {
             let user = await getUser(next.fullDocument.uid);
             if (user && (next.operationType === 'insert' || next.operationType === 'update')) {
-                let active = next.fullDocument.online && next.fullDocument.visible;
+                //let active = next.fullDocument.online && next.fullDocument.visible;
+                let active = true;
                 if (active) {
                     this.watchUser(next.fullDocument);
                     this.emitAll({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });

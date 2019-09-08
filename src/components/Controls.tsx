@@ -103,7 +103,7 @@ export const AnswerText = (props: { answers: string[], correctAnswer?: string, o
     }, []);
 
     return <>
-        {props.answers.map((a) => <Button style={{
+        {props.answers.map(a => a.toLowerCase()).map((a) => <Button style={{
             backgroundColor: a !== pickedAnswer ? 'white' :
                 (props.correctAnswer === undefined ? 'black' :
                     (a === props.correctAnswer ? 'limegreen' : 'maroon')),

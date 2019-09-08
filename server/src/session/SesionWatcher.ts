@@ -63,6 +63,12 @@ export class SessionWatcher {
                 }
             }
         });
+        
+        let sessionUsers = await SESSION_USER().find({ sid: this.id, visible: true, online: true }).toArray();
+
+        for (let su of await sessionUsers) {
+           this.watchUser(su); 
+        }
 
         console.log('[SessionWatcher]', 'inited');
     }

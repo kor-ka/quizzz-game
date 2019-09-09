@@ -104,11 +104,12 @@ export const AnswerText = (props: { answers: string[], correctAnswer?: string, o
 
     return <>
         {props.answers.map((a) => <Button style={{
-            backgroundColor: a !== pickedAnswer ? 'white' :
-                (props.correctAnswer === undefined ? 'black' :
-                    (a === props.correctAnswer ? 'limegreen' : 'maroon')),
-            color: a === pickedAnswer ? 'white' : 'black',
-        }} onClick={() => onPick(a)}>{a}</Button>)}
+            backgroundColor:
+                a === props.correctAnswer ? 'limegreen' :
+                    a === pickedAnswer ? (props.correctAnswer ? 'red' : 'black')
+                        : 'white'
+        }} onClick={() => onPick(a)}>{a}</Button>)
+        }
     </>
 }
 
@@ -123,6 +124,9 @@ export const AnswerOpen = (props: { correctAnswer?: string, onPick: (answer: str
         props.correctAnswer === answer ? 'limegreen' : 'maroon';
     return <>
         <Input style={{ border: `1px solid ${borderColor}`, borderRadius: 8 }} onChange={onPick} />
+        {props.correctAnswer && props.correctAnswer !== answer &&
+            <span style={{ padding: 20, margin: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'limegreen' }}>{props.correctAnswer}</span>
+        }
     </>
 }
 

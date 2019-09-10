@@ -42,7 +42,8 @@ class SessionWatcher {
             this.sessionUsersWatcher.on('change', (next) => __awaiter(this, void 0, void 0, function* () {
                 let user = yield User_1.getUser(next.fullDocument.uid);
                 if (user && (next.operationType === 'insert' || next.operationType === 'update')) {
-                    let active = next.fullDocument.online && next.fullDocument.visible;
+                    //let active = next.fullDocument.online && next.fullDocument.visible;
+                    let active = true;
                     if (active) {
                         this.watchUser(next.fullDocument);
                         this.emitAll({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: User_1.toClient(user) });
@@ -57,6 +58,10 @@ class SessionWatcher {
                     }
                 }
             }));
+            let sessionUsers = yield Session_1.SESSION_USER().find({ sid: this.id, visible: true, online: true }).toArray();
+            for (let su of yield sessionUsers) {
+                this.watchUser(su);
+            }
             console.log('[SessionWatcher]', 'inited');
         });
         this.addUserConnection = (connection) => __awaiter(this, void 0, void 0, function* () {

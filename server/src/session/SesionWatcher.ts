@@ -63,11 +63,11 @@ export class SessionWatcher {
                 }
             }
         });
-        
+
         let sessionUsers = await SESSION_USER().find({ sid: this.id, visible: true, online: true }).toArray();
 
         for (let su of await sessionUsers) {
-           this.watchUser(su); 
+            this.watchUser(su);
         }
 
         console.log('[SessionWatcher]', 'inited');
@@ -85,7 +85,7 @@ export class SessionWatcher {
         let batch: Event[] = [];
         for (let su of await sessionUsers) {
             let user = await getUser(su.uid);
-            if (user) {
+            if (su.online && su.visible && user) {
                 batch.push({ type: 'SessionUserJoinedEvent', sessionId: this.id, user: toClient(user) });
             }
         }

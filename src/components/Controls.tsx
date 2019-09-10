@@ -117,7 +117,7 @@ export const AnswerOpen = (props: { correctAnswer?: string, onPick: (answer: str
     const [answer, setAnsser] = React.useState<string>();
     const onPick = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         let a = event.target.value;
-        setAnsser(a.toLowerCase());
+        setAnsser(a.toLowerCase().trim());
         props.onPick(a);
     }, []);
     let borderColor = props.correctAnswer === undefined ? 'black' :

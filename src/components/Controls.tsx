@@ -5,6 +5,7 @@ import { ClientUser } from "../../server/src/user/User";
 import { Button, Input, FlexLayout } from "../ui/ui";
 import { GameState } from "../model/GameModel";
 import { ClientQuestion } from "../../server/src/game/Game";
+import { debounce } from "../utils/time";
 
 
 export const SessionStateComponent = () => {
@@ -86,8 +87,12 @@ export const Profile = () => {
         return dispose;
     }, [session]);
 
+    const emit = React.useCallback(debounce((message) => {
+        session!.io.emit(message)
+    }, 300), [])
+
     let onChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        session!.io.emit({ type: 'UserRename', name: event.target.value })
+        emit({ type: 'UserRename', name: event.target.value });
     }, []);
 
     return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)' }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;

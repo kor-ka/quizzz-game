@@ -85,7 +85,6 @@ export class UserConnection {
     }
 
     close = async () => {
-        this.socket.disconnect();
         if (this.sessionWatcher) {
             await this.sessionWatcher.removeUserConnection(this);
         }

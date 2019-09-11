@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import * as React from "react";
-import { SessionContext } from '../App';
 import { SceneContext } from './Scene';
-import { getCube, useAddMeshRemove, getCard } from './Helpers';
-import { MeshLambertMaterial, Mesh } from 'three';
+import { camIdlePostion, camIdleRotation } from './SesssionComponent';
+import { Mesh } from 'three';
+import { getCard } from './Helpers';
 
 const getCyl = (color: string) => {
     let geo = new THREE.CylinderGeometry(500, 500, 500, 10, 1, true);
@@ -24,8 +24,8 @@ const spiralTexture = (color: string) => {
 
     var ctx = canvas.getContext('2d')!;
     ctx.scale(devicePixelRatio, devicePixelRatio);
-    ctx.fillStyle = '#fff'
-    ctx.fillRect(0, 0, w + 1, h + 1);
+    // ctx.fillStyle = '#fff'
+    // ctx.fillRect(0, 0, w + 1, h + 1);
     ctx.beginPath();
     ctx.lineTo(w, h);
     ctx.lineTo(w, h / 2);
@@ -53,21 +53,26 @@ const spiralTexture = (color: string) => {
 export const Idle = React.memo((props: { active: boolean }) => {
 
     let scene = React.useContext(SceneContext);
-
+    let [holder] = React.useState(new Mesh());
 
     React.useEffect(() => {
+        scene.scene.add(holder);
+        holder.position.copy(camIdlePostion);
+        holder.rotation.setFromVector3(camIdleRotation);
+        holder.updateMatrixWorld();
 
         // TUBE
         let cyls: THREE.Mesh[] = [];
         for (let i = 0; i < 10; i++) {
             cyls.push(getCyl('black'));
         }
-        cyls.map(c => scene.cam.add(c));
+
+        cyls.map(c => holder.add(c));
 
         // CARD
         let card = getCard({ depth: 30 });
         card.position.z -= 800;
-        scene.cam.add(card);
+        holder.add(card);
 
         let dispose = scene.subscribeTicks((now) => {
 
@@ -90,8 +95,7 @@ export const Idle = React.memo((props: { active: boolean }) => {
 
         return () => {
             dispose();
-            cyls.map(c => scene.cam.remove(c));
-            scene.cam.remove(card);
+            scene.cam.remove(holder);
         }
 
 

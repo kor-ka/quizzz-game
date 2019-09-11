@@ -25,8 +25,7 @@ camAwaitRotation.x = 0;
 
 export const camIdlePostion = new Vector3();
 export const camIdleRotation = new Vector3();
-camIdlePostion.z = 2400;
-camIdlePostion.y = -500;
+camIdlePostion.z = 5600;
 
 
 export const SessionComponent = () => {
@@ -58,12 +57,8 @@ export const SceneRender = () => {
             } else if (sessionState.state === 'game') {
                 setState('game');
             }
-
             console.warn(sessionState, users);
-
         }
-
-
 
         let sub1 = session.subscribeSessionState(s => {
             sessionState = s;
@@ -81,11 +76,11 @@ export const SceneRender = () => {
 
     React.useEffect(() => {
 
-        if (state === 'game' || state === 'countdown') {
+        if (state === 'game') {
             camAnimatTo({ position: camGamePostion, rotation: camGameRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
         } else if (state === 'joining') {
             camAnimatTo({ position: camAwaitPostion, rotation: camAwaitRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
-        } else if (state === 'idle') {
+        } else if (state === 'idle' || state === 'countdown') {
             camAnimatTo({ position: camIdlePostion, rotation: camIdleRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
         }
 
@@ -101,7 +96,7 @@ export const SceneRender = () => {
         <Button style={{ border: state === 'joining' ? '1px solid black' : '' }} onClick={tojoining}>joining</Button> */}
         {session!.isMobile && (state === 'joining' || state === 'countdown') && <SessionStateComponent />}
         {state === 'game' && <GameControls />}
-        {state === 'idle' && <Idle active={state === 'idle'} />}
+        <Idle active={state === 'idle'} />
         <GameRender />
         <JoiningRender />
     </>

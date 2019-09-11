@@ -98,16 +98,21 @@ export const AnswerText = (props: { answers: string[], correctAnswer?: string, o
     const [pickedAnswer, setAnsser] = React.useState<string>();
 
     const onPick = React.useCallback((answer: string) => {
+        if (props.correctAnswer) {
+            return;
+        }
         setAnsser(answer.toLowerCase());
         props.onPick(answer);
-    }, []);
+    }, [props.correctAnswer]);
 
     return <>
-        {props.answers.map((a) => <Button style={{
+        {props.answers.map(a => a.toLocaleLowerCase()).map((a) => <Button style={{
             backgroundColor:
                 a === props.correctAnswer ? 'limegreen' :
-                    a === pickedAnswer ? (props.correctAnswer ? 'red' : 'black')
-                        : 'white'
+                    (a === pickedAnswer ? (props.correctAnswer ? 'red' : 'black')
+                        : 'white'),
+            color: (a === pickedAnswer || a === props.correctAnswer) ? 'white' : 'black',
+            opacity: props.correctAnswer && a !== pickedAnswer && a === props.correctAnswer ? 0.5 : 1
         }} onClick={() => onPick(a)}>{a}</Button>)
         }
     </>
@@ -116,10 +121,13 @@ export const AnswerText = (props: { answers: string[], correctAnswer?: string, o
 export const AnswerOpen = (props: { correctAnswer?: string, onPick: (answer: string) => void }) => {
     const [answer, setAnsser] = React.useState<string>();
     const onPick = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        if (props.correctAnswer) {
+            return;
+        }
         let a = event.target.value;
         setAnsser(a.toLowerCase().trim());
         props.onPick(a);
-    }, []);
+    }, [props.correctAnswer]);
     let borderColor = props.correctAnswer === undefined ? 'black' :
         props.correctAnswer === answer ? 'limegreen' : 'maroon';
     return <>
@@ -155,20 +163,15 @@ export const GameTTL = () => {
 }
 
 export const Question = (props: { q: ClientQuestion, gid: string }) => {
-    const [answer, setAnsser] = React.useState<string>();
-    const [submited, setSubmited] = React.useState(false);
     const onPick = React.useCallback((answer: string) => {
-        setAnsser(answer);
-    }, []);
-    let session = React.useContext(SessionContext);
-
-    const onSubmit = React.useCallback(() => {
-        if (!answer || submited) {
+        if (props.q.answer) {
             return;
         }
         session!.io.emit({ type: 'Answer', gid: props.gid, answer, qid: props.q._id });
-        setSubmited(true);
-    }, [answer]);
+
+    }, []);
+    let session = React.useContext(SessionContext);
+
 
     let aspect = window.innerWidth / (440 + 20);
     let offset = (310 + 20) * aspect;
@@ -182,21 +185,10 @@ export const Question = (props: { q: ClientQuestion, gid: string }) => {
     }}> asdasd</Button> */}
             </FlexLayout>
             <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
-                <FlexLayout style={{ pointerEvents: submited ? 'none' : 'auto' }} >
+                <FlexLayout>
                     {props.q.open && <AnswerOpen correctAnswer={props.q.answer} onPick={onPick} />}
                     {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} correctAnswer={props.q.answer} onPick={onPick} />}
                 </FlexLayout>
-
-                <Button onClick={onSubmit} style={{
-                    opacity: !answer || submited ? 0.5 : 1,
-                    color: 'white',
-                    fontSize: '22px',
-                    background: 'black',
-                    position: 'fixed', bottom: 20, right: 20,
-                    borderRadius: 48,
-                    width: 148,
-                    height: 48,
-                }}>{submited ? 'ANSWERED' : 'SUBMIT'}</Button>
 
                 <Button style={{
                     backgroundColor: 'transparent',
@@ -265,6 +257,9 @@ export const Game = () => {
 
     return <>
         {session!.isMobile && state.state === 'question' && state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
+
+        {/* <Question key={'asd'} q={{ _id: '12', category: 'sd', text: 'asd', textAnswers: ['1', '2', '3'], answer: '1' }} gid={'asd'} /> */}
+
         {(state.state === 'subResults' || state.state === 'results') && <Results game={state} />}
         {!session!.isMobile && (
             <Button style={{

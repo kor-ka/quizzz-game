@@ -76,11 +76,11 @@ export const SceneRender = () => {
 
     React.useEffect(() => {
 
-        if (state === 'game') {
+        if (state === 'game' || state === 'countdown') {
             camAnimatTo({ position: camGamePostion, rotation: camGameRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
         } else if (state === 'joining') {
             camAnimatTo({ position: camAwaitPostion, rotation: camAwaitRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
-        } else if (state === 'idle' || state === 'countdown') {
+        } else if (state === 'idle') {
             camAnimatTo({ position: camIdlePostion, rotation: camIdleRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
         }
 

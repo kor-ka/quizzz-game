@@ -156,10 +156,10 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
     let q = new ObjectId(qid);
     let game = await GAME().findOne({ _id: g });
     let question = await QUESTION().findOne({ _id: q });
-    if (game && game.qid && question) {
+    if (game && game.qid && question && game.state === 'question') {
         let points = 1;
         points *= game.qid.equals(q) ? 1 : 0;
         points *= (question.answer.toLowerCase() === answer.toLowerCase()) ? 1 : 0;
-        await GAME_USER_ANSWER().insertOne({ gid: g, qid: q, uid: u, answer, points });
+        await GAME_USER_ANSWER().updateOne({ gid: g, qid: q, uid: u }, { $set: { answer, points } }, { upsert: true });
     }
 }

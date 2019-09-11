@@ -2,9 +2,11 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as THREE from 'three';
 import { FlexLayout } from "../ui/ui";
+import { MeshLambertMaterial } from "three";
+import { camIdlePostion, camIdleRotation } from "./SesssionComponent";
 export const isChromium = (window as any).chrome;
 
-export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: () => void) => () => void }>({} as any);
+export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: (now: number) => void) => () => void }>({} as any);
 export const minSceneCamZ = 500;
 
 export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: THREE.PerspectiveCamera }> {
@@ -14,13 +16,13 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
     renderer?: THREE.WebGLRenderer;
     frameId?: number;
 
-    tickListeners = new Set<() => void>();
+    tickListeners = new Set<(now: number) => void>();
     constructor(props: any) {
         super(props);
         this.state = {};
     }
 
-    subscribeTicks = (listener: () => void) => {
+    subscribeTicks = (listener: (now: number) => void) => {
         this.tickListeners.add(listener);
         return () => {
             this.tickListeners.delete(listener);
@@ -43,23 +45,38 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
                 // so bad
                 Number.MAX_SAFE_INTEGER
             )
-            this.cam.position.z = minSceneCamZ;
-            this.cam.position.y = -500;
-            this.cam.rotation.x = THREE.Math.degToRad(45);
+            this.cam.position.copy(camIdlePostion);
+            this.cam.rotation.setFromVector3(camIdleRotation);
+
+            this.scene.add(this.cam);
 
             const color = 0xFFFFFF;
             const intensity = 1;
             const light = new THREE.DirectionalLight(color, intensity);
-            light.position.set(0, 10, 400);
-            light.target.position.set(5, 500, 200);
+            light.position.set(1000, -1000, 4000);
+            light.target.position.set(0, 10, 0);
+            light.castShadow = true;
             this.scene.add(light);
             this.scene.add(light.target);
 
             //ADD RENDERER
             this.renderer = new THREE.WebGLRenderer({ antialias: true })
-            this.renderer.setClearColor('#ffffff')
+            this.renderer.setClearColor('#fffffe')
             this.renderer.setSize(width, height)
+
+            // SHADOWS
+            this.renderer.shadowMapEnabled = true;
+            this.renderer.shadowMapDebug = true;
+
+
             e.appendChild(this.renderer.domElement)
+
+            // let floor = new THREE.PlaneGeometry(10000, 10000);
+            // let floorMesh = new THREE.Mesh(floor, new MeshLambertMaterial({ color: 0xffffff }));
+            // // floorMesh.position.z = - 100;
+            // floorMesh.receiveShadow = true;
+
+            // this.scene.add(floorMesh);
 
             var gridHelper = new THREE.GridHelper(100000, 1000);
             gridHelper.rotateX(1.5708);
@@ -83,7 +100,8 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
         cancelAnimationFrame(this.frameId!)
     }
     tick = () => {
-        this.tickListeners.forEach(l => l());
+        let now = new Date().getTime()
+        this.tickListeners.forEach(l => l(now));
         this.renderScene()
         this.frameId = window.requestAnimationFrame(this.tick)
     }

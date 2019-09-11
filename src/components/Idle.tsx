@@ -2,26 +2,109 @@ import * as THREE from 'three';
 import * as React from "react";
 import { SessionContext } from '../App';
 import { SceneContext } from './Scene';
-import { getCube, useAddMeshRemove } from './Helpers';
+import { getCube, useAddMeshRemove, getCard } from './Helpers';
+import { MeshLambertMaterial, Mesh } from 'three';
 
-export const Idle = (props: { active: boolean; }) => {
+const getCyl = (color: string) => {
+    let geo = new THREE.CylinderGeometry(500, 500, 500, 10, 1, true);
+    geo.rotateX(THREE.Math.degToRad(90));
+    let res = new THREE.Mesh(geo, spiralTexture(color))
+    return res;
+}
 
-    let [cube, setCube] = React.useState(getCube())
-    useAddMeshRemove(cube);
+const spiralTexture = (color: string) => {
+    let w = 400;
+    let h = 200
+
+
+
+    let canvas = document.createElement('canvas');
+    canvas.width = w * devicePixelRatio;
+    canvas.height = h * devicePixelRatio;
+
+    var ctx = canvas.getContext('2d')!;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, w + 1, h + 1);
+    ctx.beginPath();
+    ctx.lineTo(w, h);
+    ctx.lineTo(w, h / 2);
+    ctx.lineTo(w / 2, 0);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, w)
+    ctx.lineTo(w / 2, h);
+    ctx.lineTo(0, h / 2);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    var texture = new THREE.Texture(canvas);
+    // canvas.remove();
+    texture.needsUpdate = true;
+
+    return new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.BackSide });
+}
+
+export const Idle = React.memo((props: { active: boolean }) => {
+
+    let scene = React.useContext(SceneContext);
+
 
     React.useEffect(() => {
-        let interval = setInterval(() => {
-            cube.rotation.x += 0.1;
-            cube.rotation.y += 0.1;
-            cube.rotation.z += 0.1;
-        }, 20);
-        return () => {
-            clearInterval(interval);
+
+        // TUBE
+        let cyls: THREE.Mesh[] = [];
+        for (let i = 0; i < 10; i++) {
+            cyls.push(getCyl('black'));
         }
-    });
+        cyls.map(c => scene.cam.add(c));
 
-    cube.material = new THREE.MeshBasicMaterial({ color: props.active ? '#ff00ee' : '#00ffee' })
+        // CARD
+        let card = getCard({ depth: 30 });
+        card.position.z -= 800;
+        scene.cam.add(card);
+
+        let dispose = scene.subscribeTicks((now) => {
+
+            // TUBE ANIMATION
+            let time = 5000 * cyls.length;
+            let distance = cyls.length * 500;
+            cyls.map((c, i) => {
+                let interoplated = ((now - time / cyls.length * i) % time) / time;
+                c.position.z = distance * interoplated - cyls.length * 500 + 200;
+                c.rotateZ(0.003);
+            });
+
+            // Card ANIMATION
+            let angle = THREE.Math.degToRad(30);
+            card.rotation.y = Math.sin(1 / 732 * now) * angle;
+            card.rotation.z = THREE.Math.degToRad(-90) + Math.cos(1 / 952 * now) * angle;
+            // console.warn(Math.sin(time));
+
+        })
+
+        return () => {
+            dispose();
+            cyls.map(c => scene.cam.remove(c));
+            scene.cam.remove(card);
+        }
 
 
-    return null;
-}
+    }, []);
+
+    React.useEffect(() => {
+        if (props.active) {
+
+        } else {
+
+        }
+    }, [props.active])
+
+
+    return <div />;
+})

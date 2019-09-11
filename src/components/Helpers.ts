@@ -25,7 +25,12 @@ export const getCube = () => {
     return new THREE.Mesh(geometry, material)
 }
 
-export const getCard = () => {
+export const getCard = (params?: { depth?: number }) => {
+    let depth = 3;
+    if (params) {
+        depth = params.depth || depth;
+    }
+
     var height = 440, width = 310, radius = 40;
 
     var shape = new THREE.Shape();
@@ -46,7 +51,7 @@ export const getCard = () => {
 
     var geometry = new THREE.ExtrudeGeometry(shape, {
         steps: 1,
-        depth: 3,
+        depth,
         bevelEnabled: false,
     });
     var material = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -59,9 +64,10 @@ export const getCard = () => {
 
     let text = getTextMesh({ width: 440, height: 310, text: 'Q?', fontSize: 440, font: 'Courier', bold: true, x: 200, y: -85 })
     mesh.add(text);
-    text.position.z = 3;
+    text.position.z = depth / 2 + 3;
     text.rotation.z = THREE.Math.degToRad(90);
 
+    mesh.castShadow = true;
     return mesh;
 }
 

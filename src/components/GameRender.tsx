@@ -146,7 +146,7 @@ export const GameRender = () => {
     //                 qid: makeId(),
     //                 category: new Date().getTime() + 'test',
     //                 active: true,
-    //                 question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
+    //                 // question: i === 9 ? { text: new Date().toLocaleTimeString(), _id: makeId(), category: new Date().getTime() + 'test' } : undefined,
     //             }
     //         );
     //     }

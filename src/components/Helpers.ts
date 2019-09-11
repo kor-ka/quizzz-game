@@ -118,6 +118,9 @@ export let getTextMesh = (props: { width: number, height: number, text: string, 
     context.scale(devicePixelRatio, devicePixelRatio);
     var maxWidth = width;
     var lineHeight = fontSize;
+
+    fontSize = fontSize * Math.min(1, 100 / text.length);
+
     context.font = `${bold ? 'bold' : ''} ${fontSize}px ${font}`;
     // context.fillStyle = '#f9e'
     context.fillStyle = 'rgba(0,0,0,0)'

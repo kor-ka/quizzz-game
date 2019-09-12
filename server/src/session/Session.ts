@@ -41,24 +41,23 @@ let startCountdown = async (sessionId: string) => {
     let session = await SESSIONS().findOne({ _id: new ObjectId(sessionId) });
     if (session && session.state === 'await') {
         let ttl = new Date().getTime() + 10000;
-        let gid = await startGame(session._id, 10000);
-        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl, gameId: gid } });
+        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'countdown', stateTtl: ttl } });
+        await startGame(session._id, 10000);
     }
 }
 
 let stopCountDown = async (sessionId: string) => {
     let session = await SESSIONS().findOne({ _id: new ObjectId(sessionId) });
     if (session && session.state === 'countdown') {
-        await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', to: 'game', sid: new ObjectId(sessionId) })
+        await WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', sid: new ObjectId(sessionId) });
+        await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', sid: new ObjectId(sessionId) });
         await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await', stateTtl: 0 } });
-        if (session.gameId) {
-            await WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', gid: session.gameId });
-        }
     }
 }
 
 let reset = async (sessionId: string) => {
-    await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', sid: new ObjectId(sessionId) })
+    await WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', sid: new ObjectId(sessionId) });
+    await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', sid: new ObjectId(sessionId) });
     await SESSIONS().updateOne({ _id: new ObjectId(sessionId) }, { $set: { state: 'await', stateTtl: 0, gameId: null } });
 }
 

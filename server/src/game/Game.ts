@@ -80,7 +80,7 @@ export let GAME_USER_SCORE = () => MDB.collection<GameUserScore>('game_user_scor
 export const startGame = async (sid: ObjectId, after: number, ctx: ClientSession) => {
 
     // TODO: filter user known questions
-    let questions = await QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
+    let questions = await QUESTION().aggregate([{ $sample: { size: 10 } }]).toArray();
 
     let ttl = new Date().getTime() + after;
     let qid = questions[0]._id;

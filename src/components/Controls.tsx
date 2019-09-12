@@ -32,6 +32,9 @@ export const SessionStateComponent = () => {
     }, [state.ttl]);
 
     let startStop = React.useCallback(() => {
+        if (loading) {
+            return
+        }
         setLoading(true);
         if (state.state === 'await') {
             session!.io.emit({ type: 'SessionStartGameCountdown', id: session!.id })

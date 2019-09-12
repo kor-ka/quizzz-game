@@ -47,12 +47,9 @@ let startCountdown = async (sessionId: string) => {
 }
 
 let stopCountDown = async (sessionId: string) => {
-    let session = await SESSIONS().findOne({ _id: new ObjectId(sessionId) });
-    if (session && session.state === 'countdown') {
-        await WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', sid: new ObjectId(sessionId) });
-        await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', sid: new ObjectId(sessionId) });
-        await SESSIONS().updateOne({ _id: new ObjectId(session._id) }, { $set: { state: 'await', stateTtl: 0 } });
-    }
+    await WORK_QUEUE_GAME().deleteMany({ type: 'GameChangeState', sid: new ObjectId(sessionId) });
+    await WORK_QUEUE_SESSION().deleteMany({ type: 'SessionChangeState', sid: new ObjectId(sessionId) });
+    await SESSIONS().updateOne({ _id: new ObjectId(sessionId) }, { $set: { state: 'await', stateTtl: 0, gameId: null } });
 }
 
 let reset = async (sessionId: string) => {
@@ -65,8 +62,8 @@ export let moveToState = async (to: SessionChangeState) => {
     await SESSIONS().updateOne({ _id: new ObjectId(to.sid) }, { $set: { state: to.to, stateTtl: 0, gameId: to.gid } });
 }
 
-export let onGameStarted = async (sid: ObjectId) => {
-    await SESSIONS().update({ _id: sid, state: 'countdown' }, { $set: { state: 'game' } });
+export let onGameStarted = async (sid: ObjectId, gid: ObjectId) => {
+    await SESSIONS().update({ _id: sid, state: 'countdown' }, { $set: { state: 'game', gameId: gid } });
 }
 
 

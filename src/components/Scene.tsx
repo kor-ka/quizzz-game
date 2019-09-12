@@ -117,7 +117,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
         return (
             <SceneContext.Provider value={{ scene: this.state.scene!, cam: this.state.cam!, subscribeTicks: this.subscribeTicks }}>
                 <div
-                    style={{ width: window.innerWidth, height: window.innerHeight }}
+                    style={{ width: '100%', height: '100%', display: 'flex', position: 'absolute' }}
                     ref={this.ref}
                 />
                 <FlexLayout style={{ width: '100%', height: '100%', position: 'absolute' }} divider={0}>

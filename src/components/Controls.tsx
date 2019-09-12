@@ -47,7 +47,7 @@ export const SessionStateComponent = () => {
         session!.io.emit({ type: 'SessionReset', id: session!.id })
     }, [state.state]);
 
-    return <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', zIndex: 100 }} divider={0}>
+    return <FlexLayout style={{ flexGrow: 1, zIndex: 100 }}>
         <Profile />
 
         {(state.state === 'await' || state.state === 'countdown') &&

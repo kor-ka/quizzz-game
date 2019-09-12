@@ -29,7 +29,7 @@ camIdlePostion.z = 5600;
 
 
 export const SessionComponent = () => {
-    return <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }} >
+    return <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }} >
         <Scene>
             <SceneRender />
         </Scene>
@@ -90,10 +90,6 @@ export const SceneRender = () => {
     const tojoining = React.useCallback(() => { setState('joining') }, []);
 
     return <>
-        {/* <div style={{ position: 'absolute', top: 0 }}>{state}</div> */}
-        {/* <Idle active={state === 'idle'} /> */}
-        {/* <Button style={{ border: state === 'idle' ? '1px solid black' : '' }} onClick={toIdle}>Idle</Button>
-        <Button style={{ border: state === 'joining' ? '1px solid black' : '' }} onClick={tojoining}>joining</Button> */}
         {session!.isMobile && (state === 'joining' || state === 'countdown') && <SessionStateComponent />}
         {state === 'game' && <GameControls />}
         <Idle active={state === 'idle'} />

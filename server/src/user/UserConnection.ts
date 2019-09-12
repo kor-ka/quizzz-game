@@ -6,6 +6,8 @@ import { SessionWatcher, getSessionWatcher } from '../session/SesionWatcher';
 import { handleMessage as sessionHandleMessage } from '../session/Session';
 import { gameHandleMessage } from '../game/Game';
 import { makeId } from '../utils/makeId';
+import { MDBClient } from '../MDB';
+import { ClientSession } from 'mongodb';
 
 export class UserConnection {
     id = makeId();
@@ -15,6 +17,7 @@ export class UserConnection {
     sessionWatcher?: SessionWatcher;
     inited = false;
     messages: Message[] = [];
+    session: ClientSession;
     constructor(socket: Socket) {
         this.socket = socket;
 
@@ -26,6 +29,14 @@ export class UserConnection {
             let message = JSON.parse(m) as Message
             this.handleMessage(message);
 
+        });
+
+        this.session = MDBClient.startSession({
+            defaultTransactionOptions: {
+                readConcern: { level: 'local' },
+                writeConcern: { w: 'majority' },
+                readPreference: 'primary'
+            }
         });
 
         this.init();
@@ -58,24 +69,28 @@ export class UserConnection {
             this.socket.disconnect();
         }
         this.inited = true;
-        this.messages.forEach(this.handleMessage);
+        this.messages.forEach(async (m) => {
+            await this.handleMessage(m);
+        });
     }
 
     handleMessage = async (message: Message) => {
-        if (!this.inited) {
-            this.messages.push(message);
-            return;
-        }
-        // subscribe updates
-        if (message.type === 'InitSession') {
-            this.sessionWatcher = await getSessionWatcher(message.id);
-            this.sessionWatcher.addUserConnection(this);
-        }
+        await this.session.withTransaction(async () => {
+            if (!this.inited) {
+                this.messages.push(message);
+                return;
+            }
+            // subscribe updates
+            if (message.type === 'InitSession') {
+                this.sessionWatcher = await getSessionWatcher(message.id);
+                this.sessionWatcher.addUserConnection(this);
+            }
 
-        // some actions
-        await userHandeMessage(this.user!._id.toHexString(), message);
-        await sessionHandleMessage(message);
-        await gameHandleMessage(this.user!._id.toHexString(), message);
+            // some actions
+            await userHandeMessage(this.user!._id.toHexString(), message);
+            await sessionHandleMessage(message, this.session);
+            await gameHandleMessage(this.user!._id.toHexString(), message);
+        });
     }
 
     emit = (event: Event | Event[]) => {

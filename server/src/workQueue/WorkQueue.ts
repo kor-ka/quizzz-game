@@ -55,5 +55,5 @@ export const startWorker = () => {
                 await WORK_QUEUE().updateOne({ _id: work.value._id }, { $set: { lock: false } });
             }
         }
-    }, 500);
+    }, 300);
 }

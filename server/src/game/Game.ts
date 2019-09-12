@@ -3,6 +3,7 @@ import { MDB } from "../MDB";
 import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
 import { Message } from "../entity/messages";
 import { onGameStarted } from "../session/Session";
+import { ClientSession } from "mongodb";
 
 export type GameState = 'wait' | 'question' | 'subResults' | 'results';
 
@@ -76,22 +77,22 @@ export let GAME_USER_ANSWER = () => MDB.collection<GameUserAnswer>('game_user_an
 export let GAME_USER_SCORE = () => MDB.collection<GameUserScore>('game_user_score');
 
 
-export const startGame = async (sid: ObjectId, after: number) => {
+export const startGame = async (sid: ObjectId, after: number, ctx: ClientSession) => {
 
     // TODO: filter user known questions
     let questions = await QUESTION().aggregate([{ $sample: { size: 3 } }]).toArray();
 
     let ttl = new Date().getTime() + after;
     let qid = questions[0]._id;
-    let gid = (await GAME().insertOne({ state: 'wait', stateTtl: ttl, sid })).insertedId;
+    let gid = (await GAME().insertOne({ state: 'wait', stateTtl: ttl, sid }, { session: ctx })).insertedId;
     console.log("START GAME", gid);
     try {
-        await GAME_QUESTION().insertMany(questions.map(q => ({ gid, qid: q._id, completed: false, categoty: q.category })), { ordered: false });
+        await GAME_QUESTION().insertMany(questions.map(q => ({ gid, qid: q._id, completed: false, categoty: q.category })), { ordered: false, session: ctx });
     } catch (e) {
         // ignore duplicates
         // console.warn(e);
     }
-    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'question', qid, sid })
+    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'question', qid, sid }, { session: ctx });
     return gid;
 }
 

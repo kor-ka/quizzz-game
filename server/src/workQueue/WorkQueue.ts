@@ -24,6 +24,7 @@ export interface GameChangeState extends WorkBase {
     gid: ObjectId;
     to: GameState;
     qid: ObjectId;
+    sid: ObjectId;
 }
 
 export let WORK_QUEUE_SESSION = () => MDB.collection<SessionChangeState>('work_queue');

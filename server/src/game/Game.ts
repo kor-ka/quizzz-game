@@ -91,7 +91,7 @@ export const startGame = async (sid: ObjectId, after: number) => {
         // ignore duplicates
         // console.warn(e);
     }
-    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'question', qid })
+    await WORK_QUEUE_GAME().insertOne({ gid, type: 'GameChangeState', ttl, to: 'question', qid, sid })
     return gid;
 }
 
@@ -115,9 +115,9 @@ export const moveToState = async (args: GameChangeState) => {
         let candidate = await GAME_QUESTION().findOne({ gid: args.gid, completed: false });
         console.warn('[GAME]', 'candidate', candidate && candidate.qid);
         if (candidate) {
-            await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'question', qid: candidate.qid, gid: args.gid });
+            await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'question', qid: candidate.qid, gid: args.gid, sid: args.sid });
         } else {
-            await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'results', qid: args.qid, gid: args.gid });
+            await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'results', qid: args.qid, gid: args.gid, sid: args.sid });
         }
 
     } else if (args.to === 'question') {
@@ -128,7 +128,7 @@ export const moveToState = async (args: GameChangeState) => {
         await GAME().update({ _id: args.gid }, { $set: { state: args.to, stateTtl, qid: args.qid } });
 
         // schedule reults
-        await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'subResults', qid: args.qid, gid: args.gid });
+        await WORK_QUEUE_GAME().insertOne({ type: 'GameChangeState', ttl: stateTtl, to: 'subResults', qid: args.qid, gid: args.gid, sid: args.sid });
 
     } else if (args.to === 'results') {
         // update state

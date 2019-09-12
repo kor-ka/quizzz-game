@@ -2,8 +2,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as THREE from 'three';
 import { FlexLayout } from "../ui/ui";
-import { MeshLambertMaterial } from "three";
+import { MeshLambertMaterial, MeshBasicMaterial } from "three";
 import { camIdlePostion, camIdleRotation } from "./SesssionComponent";
+import { gradient } from "../materials/gradient";
 export const isChromium = (window as any).chrome;
 
 export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: (now: number) => void) => () => void }>({} as any);
@@ -60,9 +61,10 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
             this.scene.add(light.target);
 
             //ADD RENDERER
-            this.renderer = new THREE.WebGLRenderer({ antialias: true })
-            this.renderer.setClearColor('#fffffe')
-            this.renderer.setSize(width, height)
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+            this.renderer.setClearColor('#fffffe');
+            this.renderer.setSize(width, height);
 
             // SHADOWS
             this.renderer.shadowMapEnabled = true;
@@ -71,9 +73,10 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
 
             e.appendChild(this.renderer.domElement)
 
-            // let floor = new THREE.PlaneGeometry(10000, 10000);
-            // let floorMesh = new THREE.Mesh(floor, new MeshLambertMaterial({ color: 0xffffff }));
-            // // floorMesh.position.z = - 100;
+            // let w = 9000;
+            // let h = 9000;
+            // let floor = new THREE.PlaneGeometry(w, h);
+            // let floorMesh = new THREE.Mesh(floor, gradient(w, h, 'black', '#333'));
             // floorMesh.receiveShadow = true;
 
             // this.scene.add(floorMesh);

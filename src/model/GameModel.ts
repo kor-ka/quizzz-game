@@ -44,11 +44,7 @@ export class GameModel {
             event.stack.reverse();
             let stack = event.stack.map(q => {
                 let isCurretn = q.qid === (event.question && event.question._id);
-                if (isCurretn) {
-                    return { ...q, question: event.question, active: !q.completed };
-                } else {
-                    return { ...q, active: true };
-                }
+                return { ...q, question: isCurretn ? event.question : undefined, active: !q.completed };
             });
             let targetState = event.state;
             if (targetState === 'subResults') {

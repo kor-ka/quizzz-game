@@ -67,7 +67,7 @@ export const SessionStateComponent = () => {
     </FlexLayout>
 }
 
-export const Users = () => {
+export const Users = React.memo(() => {
     let [state, setState] = React.useState<Map<string, ClientUser>>(new Map());
     let session = React.useContext(SessionContext);
     React.useEffect(() => {
@@ -78,9 +78,9 @@ export const Users = () => {
     }, [session]);
 
     return <>{JSON.stringify(Array.from(state))}</>
-}
+});
 
-export const Profile = () => {
+export const Profile = React.memo(() => {
     let [me, setMe] = React.useState<ClientUser>();
     let session = React.useContext(SessionContext);
     React.useEffect(() => {
@@ -99,10 +99,10 @@ export const Profile = () => {
     }, []);
 
     return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)' }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;
-}
+});
 
 
-export const AnswerText = (props: { answers: string[], correctAnswer?: string, onPick: (answer: string) => void }) => {
+export const AnswerText = React.memo((props: { answers: string[], correctAnswer?: string, onPick: (answer: string) => void }) => {
     const [pickedAnswer, setAnsser] = React.useState<string>();
 
     const onPick = React.useCallback((answer: string) => {
@@ -124,9 +124,9 @@ export const AnswerText = (props: { answers: string[], correctAnswer?: string, o
         }} onClick={() => onPick(a)}>{a}</Button>)
         }
     </>
-}
+});
 
-export const AnswerOpen = (props: { correctAnswer?: string, onPick: (answer: string) => void }) => {
+export const AnswerOpen = React.memo((props: { correctAnswer?: string, onPick: (answer: string) => void }) => {
     const [answer, setAnsser] = React.useState<string>();
     const onPick = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         if (props.correctAnswer) {
@@ -144,9 +144,9 @@ export const AnswerOpen = (props: { correctAnswer?: string, onPick: (answer: str
             <span style={{ padding: 20, margin: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'limegreen' }}>{props.correctAnswer}</span>
         }
     </>
-}
+});
 
-export const GameTTL = () => {
+export const GameTTL = React.memo(() => {
     let session = React.useContext(SessionContext);
     let [timeout, setTimeout] = React.useState(0);
     let [state, setState] = React.useState<GameState>(session!.game.state);
@@ -168,9 +168,9 @@ export const GameTTL = () => {
     }, [state.ttl]);
 
     return <>{timeout}</>;
-}
+});
 
-export const Question = (props: { q: ClientQuestion, gid: string }) => {
+export const Question = React.memo((props: { q: ClientQuestion, gid: string }) => {
     const onPick = React.useCallback((answer: string) => {
         if (props.q.answer) {
             return;
@@ -197,49 +197,21 @@ export const Question = (props: { q: ClientQuestion, gid: string }) => {
                     {props.q.open && <AnswerOpen correctAnswer={props.q.answer} onPick={onPick} />}
                     {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} correctAnswer={props.q.answer} onPick={onPick} />}
                 </FlexLayout>
-
-                <Button style={{
-                    backgroundColor: 'transparent',
-                    opacity: 0.5,
-                    color: 'black',
-                    fontSize: '22px',
-                    position: 'fixed',
-                    bottom: 20, left: 20,
-                    borderRadius: 48,
-                    width: 148,
-                    height: 48,
-                    textAlign: 'left'
-
-                }}><GameTTL /></Button>
-
             </FlexLayout>
         </FlexLayout>
 
     </>
-}
+});
 
-export const Results = (props: { game: GameState }) => {
+export const Results = React.memo((props: { game: GameState }) => {
     return <FlexLayout style={{ height: '100%', width: '100%', padding: 20, overflowY: 'scroll' }}>
         {Array.from(props.game.scores.values()).sort((a, b) => b.score - a.score).map(us => {
             return <FlexLayout style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20 }}>{us.user.name + ': ' + us.score}</FlexLayout>
         })}
-        <Button style={{
-            backgroundColor: 'transparent',
-            opacity: 0.5,
-            color: 'black',
-            fontSize: '22px',
-            position: 'fixed',
-            bottom: 20, left: 20,
-            borderRadius: 48,
-            width: 148,
-            height: 48,
-            textAlign: 'left'
-
-        }}><GameTTL /></Button>
     </FlexLayout>
-}
+});
 
-export const Game = () => {
+export const Game = React.memo(() => {
     let session = React.useContext(SessionContext);
     let [state, setState] = React.useState<GameState>(session!.game.state);
 
@@ -269,20 +241,18 @@ export const Game = () => {
         {/* <Question key={'asd'} q={{ _id: '12', category: 'sd', text: 'asd', textAnswers: ['1', '2', '3'], answer: '1' }} gid={'asd'} /> */}
 
         {(state.state === 'subResults' || state.state === 'results') && <Results game={state} />}
-        {!session!.isMobile && (
-            <Button style={{
-                backgroundColor: 'transparent',
-                opacity: 0.5,
-                color: 'black',
-                fontSize: '22px',
-                position: 'fixed',
-                bottom: 20, left: 20,
-                borderRadius: 48,
-                width: 148,
-                height: 48,
-                textAlign: 'left'
+        {<Button style={{
+            backgroundColor: 'transparent',
+            opacity: 0.5,
+            color: 'black',
+            fontSize: '22px',
+            position: 'fixed',
+            bottom: 20, left: 20,
+            borderRadius: 48,
+            width: 148,
+            height: 48,
+            textAlign: 'left'
 
-            }}><GameTTL /></Button>
-        )}
+        }}><GameTTL /></Button>}
     </>;
-}
+});

@@ -35,14 +35,3 @@ export let handleMessage = async (id: string, message: Message) => {
         USERS().updateOne({ _id: new ObjectId(id) }, { $set: { name: message.name } });
     }
 }
-
-export let watchUser = (id: string, onUpdated: (user: User) => void) => {
-    let stream = USERS().watch([{ $match: { _id: id } }]);
-    stream.on('change', next => {
-        onUpdated(next);
-    });
-    return async () => {
-        await stream.close();
-        stream.destroy();
-    }
-}

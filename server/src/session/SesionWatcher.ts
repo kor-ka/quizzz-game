@@ -5,6 +5,7 @@ import { MDBChangeOp } from "../utils/MDBChangeOp";
 import { USERS, User, getUser, toClient } from "../user/User";
 import { Event } from "../entity/events";
 import { SESSIONS, SESSION_USER, Session, SessionUser } from "./Session";
+import { watchUser } from "../user/UserWatcher";
 
 let sessionWatchers = new Map<string, SessionWatcher>();
 
@@ -24,7 +25,7 @@ export class SessionWatcher {
     connections = new Set<UserConnection>();
     id: string;
     sessionUsersWatcher?: ChangeStream;
-    userWatchers = new Map<string, ChangeStream>();
+    userWatchers = new Map<string, () => void>();
 
     constructor(id: string) {
         this.id = id;
@@ -56,7 +57,7 @@ export class SessionWatcher {
                     this.emitAll({ type: 'SessionUserLeftEvent', sessionId: this.id, user: toClient(user) });
                     let w = this.userWatchers.get(next.fullDocument._id.toHexString());
                     if (w) {
-                        await w.close();
+                        w();
                         this.userWatchers.delete(next.fullDocument._id.toHexString());
                     }
                 }
@@ -120,18 +121,11 @@ export class SessionWatcher {
     }
 
     watchUser = (user: SessionUser) => {
-        if (this.userWatchers.get(user._id.toHexString())) {
-            return
-        }
-        let watcher = USERS().watch([{ $match: { 'fullDocument._id': new ObjectId(user.uid) } }], { fullDocument: 'updateLookup' });
-        this.userWatchers.set(user._id.toHexString(), watcher);
-
-        watcher.on('change', async (next: MDBChangeOp<User>) => {
-            if (next.operationType === 'update') {
-                this.emitAll({ type: 'UserUpdatedEvent', user: toClient(next.fullDocument) });
-            }
+        let userWatcher = watchUser(user.uid, next => {
+            this.emitAll({ type: 'UserUpdatedEvent', user: toClient(next) });
         });
-    }
+        this.userWatchers.set(user.uid, userWatcher);
+    };
 
 
     dispose = () => {
@@ -141,7 +135,7 @@ export class SessionWatcher {
         if (this.sessionUsersWatcher) {
             this.sessionUsersWatcher.close();
         }
-        this.userWatchers.forEach(w => w.close());
+        this.userWatchers.forEach(w => w());
 
         if (this.gameWatcher) {
             this.gameWatcher.dispose();

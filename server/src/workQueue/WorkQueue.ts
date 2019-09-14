@@ -42,7 +42,7 @@ const performWork = async (work: Work) => {
 let started = false;
 export const startWorker = () => {
     if (started) {
-        return
+        return;
     }
     started = true;
     setInterval(async () => {

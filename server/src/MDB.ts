@@ -7,7 +7,7 @@ const url = process.env.MONGODB_URI || require('../../secret.json').mdbUrl;
 // Database Name
 const dbName = 'quizzz-game';
 
-export const MDBClient = new MongoClient(url);
+export const MDBClient = new MongoClient(url, { poolSize: 100 });
 
 export let MDB: Db;
 

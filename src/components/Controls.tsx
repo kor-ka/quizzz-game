@@ -60,6 +60,7 @@ export const SessionStateComponent = () => {
                     left: 20,
                     right: 20,
                     fontSize: 120,
+                    paddingBottom: 25,
                 }} >
                 {state.state === 'await' ? 'start' : Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000))}
             </Button>}
@@ -98,7 +99,7 @@ export const Profile = React.memo(() => {
         emit({ type: 'UserRename', name: event.target.value });
     }, []);
 
-    return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)' }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;
+    return <Input style={{ alignSelf: 'strech', textAlign: 'center', fontSize: 50, padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', color: 'white' }} defaultValue={me ? me.name : ''} onChange={onChange} placeholder="Your Name" />;
 });
 
 
@@ -139,7 +140,7 @@ export const AnswerOpen = React.memo((props: { correctAnswer?: string, onPick: (
     let borderColor = props.correctAnswer === undefined ? 'black' :
         props.correctAnswer === answer ? 'limegreen' : 'maroon';
     return <>
-        <Input style={{ border: `1px solid ${borderColor}`, borderRadius: 8 }} onChange={onPick} />
+        <Input style={{ border: `1px solid ${borderColor}`, borderRadius: 8, paddingLeft: 8, color: 'white' }} onChange={onPick} />
         {props.correctAnswer && props.correctAnswer !== answer &&
             <span style={{ padding: 20, margin: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'limegreen' }}>{props.correctAnswer}</span>
         }
@@ -206,7 +207,7 @@ export const Question = React.memo((props: { q: ClientQuestion, gid: string }) =
 export const Results = React.memo((props: { game: GameState }) => {
     return <FlexLayout style={{ height: '100%', width: '100%', padding: 20, overflowY: 'scroll' }}>
         {Array.from(props.game.scores.values()).sort((a, b) => b.score - a.score).map(us => {
-            return <FlexLayout style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20 }}>{us.user.name + ': ' + us.score}</FlexLayout>
+            return <FlexLayout style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'white' }}>{us.user.name + ': ' + us.score}</FlexLayout>
         })}
     </FlexLayout>
 });
@@ -244,10 +245,10 @@ export const Game = React.memo(() => {
         {<Button style={{
             backgroundColor: 'transparent',
             opacity: 0.5,
-            color: 'black',
+            color: 'white',
             fontSize: '22px',
             position: 'fixed',
-            bottom: 20, left: 20,
+            bottom: 0, left: 20,
             borderRadius: 48,
             width: 148,
             height: 48,

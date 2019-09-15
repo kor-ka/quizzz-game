@@ -40,10 +40,12 @@ const UserCards = (props: { user: ClientUserIndexed }) => {
 
     React.useEffect(() => {
         let text = getTextMesh({
-            width: 440, height: 310,
+            w: 440, h: 310,
             text: props.user.name || '???',
             fontSize: 40,
-            padding: 40
+            padding: 40,
+            background: true,
+            color: 'white',
         });
         card.add(text);
 

@@ -101,7 +101,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
         let text: THREE.Mesh;
         if (props.question && props.question.text) {
             let text = getTextMesh({
-                width: 440, height: 310,
+                w: 440, h: 310,
                 text: props.question.text,
                 fontSize: 40,
                 padding: 40

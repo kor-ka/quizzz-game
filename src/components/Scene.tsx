@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { FlexLayout } from "../ui/ui";
 import { MeshLambertMaterial, MeshBasicMaterial } from "three";
 import { camIdlePostion, camIdleRotation } from "./SesssionComponent";
-import { gradient } from "../materials/gradient";
+import { cardGradient, gradientShaderMaterial } from "../materials/gradient";
 export const isChromium = (window as any).chrome;
 
 export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: (now: number) => void) => () => void }>({} as any);
@@ -42,7 +42,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
             this.cam = new THREE.PerspectiveCamera(
                 75,
                 width / height,
-                0.1,
+                1,
                 // so bad
                 Number.MAX_SAFE_INTEGER
             )
@@ -73,13 +73,15 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
 
             e.appendChild(this.renderer.domElement)
 
-            // let w = 9000;
-            // let h = 9000;
-            // let floor = new THREE.PlaneGeometry(w, h);
-            // let floorMesh = new THREE.Mesh(floor, gradient(w, h, 'black', '#333'));
-            // floorMesh.receiveShadow = true;
+            let w = 1800000;
+            let h = 1800000;
+            // let w = 90000;
+            // let h = 90000;
+            let floor = new THREE.PlaneGeometry(w, h);
+            let floorMesh = new THREE.Mesh(floor, gradientShaderMaterial);
+            floorMesh.position.z = - 100000;
 
-            // this.scene.add(floorMesh);
+            this.scene.add(floorMesh);
 
             var gridHelper = new THREE.GridHelper(100000, 1000);
             gridHelper.rotateX(1.5708);

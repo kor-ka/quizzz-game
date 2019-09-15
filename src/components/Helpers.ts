@@ -35,7 +35,6 @@ export const getCard = (params?: { depth?: number }) => {
 
     var shape = new THREE.Shape();
 
-
     shape.moveTo(0, height / 2);
     shape.lineTo(0, height - radius);
     shape.absarc(radius, height - radius, radius, THREE.Math.degToRad(180), THREE.Math.degToRad(90), true);
@@ -47,8 +46,6 @@ export const getCard = (params?: { depth?: number }) => {
     shape.absarc(radius, radius, radius, THREE.Math.degToRad(270), THREE.Math.degToRad(180), true);
     shape.lineTo(0, height / 2);
 
-
-
     var geometry = new THREE.ExtrudeGeometry(shape, {
         steps: 1,
         depth,
@@ -58,11 +55,9 @@ export const getCard = (params?: { depth?: number }) => {
 
     let mesh = new THREE.Mesh(geometry, material);
 
-
-
     mesh.geometry.center();
 
-    let text = getTextMesh({ width: 440, height: 310, text: 'Q?', fontSize: 440, font: 'Courier', bold: true, x: 200, y: -85 })
+    let text = getTextMesh({ w: 440, h: 310, text: '?', fontSize: 300, x: 40, y: -40, color: 'white', background: true })
     mesh.add(text);
     text.position.z = depth / 2 + 3;
     text.rotation.z = THREE.Math.degToRad(90);
@@ -105,27 +100,46 @@ export let wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth
         context.fillText(lines[i], startX, startY + lineHeight * i);
     }
 }
-export let getTextMesh = (props: { width: number, height: number, text: string, fontSize: number, padding?: number, color?: string, font?: string, bold?: boolean, x?: number, y?: number }) => {
-    let { width, height, text, fontSize, padding, color, font, bold, x, y } = props;
+export let getTextMesh = (props: { w: number, h: number, text: string, fontSize: number, padding?: number, color?: string, font?: string, bold?: boolean, x?: number, y?: number, background?: boolean }) => {
+    let { w, h, text, fontSize, padding, color, font, bold, x, y, background } = props;
     padding = padding || 0;
     color = color || 'black';
     font = font || 'Arial';
     let canvas = document.createElement('canvas');
-    canvas.width = width * devicePixelRatio;
-    canvas.height = height * devicePixelRatio;
+    canvas.width = w * devicePixelRatio;
+    canvas.height = h * devicePixelRatio;
 
-    var context = canvas.getContext('2d')!;
-    context.scale(devicePixelRatio, devicePixelRatio);
-    var maxWidth = width;
+    var ctx = canvas.getContext('2d')!;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    if (background) {
+        let radius = 35;
+        let bgPadding = 6;
+        ctx.beginPath();
+        ctx.lineTo(bgPadding, h / 2);
+        ctx.arc(bgPadding + radius, bgPadding + radius, radius, THREE.Math.degToRad(180), THREE.Math.degToRad(-90));
+        ctx.arc(w - bgPadding - radius, bgPadding + radius, radius, THREE.Math.degToRad(-90), THREE.Math.degToRad(0));
+        ctx.arc(w - bgPadding - radius, h - bgPadding - radius, radius, THREE.Math.degToRad(0), THREE.Math.degToRad(90));
+        ctx.arc(bgPadding + radius, h - bgPadding - radius, radius, THREE.Math.degToRad(90), THREE.Math.degToRad(-180));
+        ctx.lineTo(bgPadding, h / 2);
+        let gradient = ctx.createLinearGradient(0, h, w, 0)
+        gradient.addColorStop(0, '#0E2268');
+        gradient.addColorStop(1, '#173199');
+        ctx.fillStyle = gradient;
+
+        ctx.fill();
+    }
+
+    var maxWidth = w;
     var lineHeight = fontSize;
 
     fontSize = fontSize * Math.min(1, 100 / text.length);
 
-    context.font = `${bold ? 'bold' : ''} ${fontSize}px ${font}`;
+    ctx.font = `${bold ? 'bold' : ''} ${fontSize}px ${font}`;
     // context.fillStyle = '#f9e'
-    context.fillStyle = 'rgba(0,0,0,0)'
-    context.fillRect(0, 0, 1000, 1000);
-    wrapText(context, text, maxWidth, lineHeight, color, height, padding, x, y);
+    ctx.fillStyle = 'rgba(0,0,0,0)'
+    ctx.fillRect(0, 0, 1000, 1000);
+    wrapText(ctx, text, maxWidth, lineHeight, color, h, padding, x, y);
 
     var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
@@ -133,7 +147,7 @@ export let getTextMesh = (props: { width: number, height: number, text: string, 
 
     let material = new THREE.MeshLambertMaterial({ map: texture, transparent: true });
 
-    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height, 10, 10), material);
+    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 10, 10), material);
     canvas.remove();
 
     return mesh;

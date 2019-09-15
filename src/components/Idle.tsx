@@ -64,7 +64,7 @@ export const Idle = React.memo((props: { active: boolean }) => {
         // TUBE
         let cyls: THREE.Mesh[] = [];
         for (let i = 0; i < 10; i++) {
-            cyls.push(getCyl('black'));
+            cyls.push(getCyl('#000'));
         }
 
         cyls.map(c => holder.add(c));

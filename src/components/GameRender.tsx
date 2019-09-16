@@ -46,55 +46,51 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
 
 
     React.useEffect(() => {
-        if (props.question!!) {
-            if (props.active) {
+        if (!props.active) {
+            console.log(props.qid, 'animate to old');
+            cardAnimatTo({ position: new Vector3(100, 0, 700), rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(0)) }, 200);
+        } else if (props.question) {
+            // find position infront of cam
+            let base = 310 + 20;
+            let vertAngle = THREE.Math.degToRad(90 - scene.cam.fov / 2);
+            let distanceV = base / 2 * Math.tan(vertAngle);
 
-                // find position infront of cam
-                let base = 310 + 20;
-                let vertAngle = THREE.Math.degToRad(90 - scene.cam.fov / 2);
-                let distanceV = base / 2 * Math.tan(vertAngle);
+            let horisontalBase = (base * scene.cam.aspect) / 2;
+            let horAngle = Math.atan(distanceV / horisontalBase);
 
-                let horisontalBase = (base * scene.cam.aspect) / 2;
-                let horAngle = Math.atan(distanceV / horisontalBase);
+            let distanveH = (440 + 20) / 2 * Math.tan(horAngle);
 
-                let distanveH = (440 + 20) / 2 * Math.tan(horAngle);
+            let camMesh = new Mesh();
+            camMesh.position.copy(camGamePostion);
+            camMesh.rotation.setFromVector3(camGameRotation);
+            camMesh.updateMatrixWorld();
 
-                let camMesh = new Mesh();
-                camMesh.position.copy(camGamePostion);
-                camMesh.rotation.setFromVector3(camGameRotation);
-                camMesh.updateMatrixWorld();
+            let mesh = new THREE.Mesh();
+            camMesh.add(mesh);
+            mesh.translateZ(-Math.max(distanceV, distanveH));
 
-                let mesh = new THREE.Mesh();
-                camMesh.add(mesh);
-                mesh.translateZ(-Math.max(distanceV, distanveH));
-
-                if (session.isMobile) {
-                    let height = 2 * Math.max(distanceV, distanveH) * Math.tan(THREE.Math.degToRad(scene.cam.fov / 2));
-                    // mesh.position.y -= (height - 160) / 2;
-                    mesh.position.y += (height - 310) / 2 - 10;
-                }
-
-                let targetPostion = new Vector3();
-                mesh.getWorldPosition(targetPostion);
-
-                let targetRotation = camGameRotation.clone();
-                targetRotation.z += THREE.Math.degToRad(-90);
-                targetRotation.x += THREE.Math.degToRad(-180);
-
-                let targetRotationVector = targetRotation;
-                cardAnimatTo({
-                    position: targetPostion,
-                    pcb: [.34, .24, .18, 1.06],
-                    rotation: targetRotationVector,
-                    rcb: [.42, 0, .3, 1.01]
-                }, 1000);
-
-            } else {
-                console.log(props.qid, 'animate to old');
-                cardAnimatTo({ position: new Vector3(100, 0, 700), rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(0)) }, 200);
+            if (session.isMobile) {
+                let height = 2 * Math.max(distanceV, distanveH) * Math.tan(THREE.Math.degToRad(scene.cam.fov / 2));
+                // mesh.position.y -= (height - 160) / 2;
+                mesh.position.y += (height - 310) / 2 - 10;
             }
 
+            let targetPostion = new Vector3();
+            mesh.getWorldPosition(targetPostion);
+
+            let targetRotation = camGameRotation.clone();
+            targetRotation.z += THREE.Math.degToRad(-90);
+            targetRotation.x += THREE.Math.degToRad(-180);
+
+            let targetRotationVector = targetRotation;
+            cardAnimatTo({
+                position: targetPostion,
+                pcb: [.34, .24, .18, 1.06],
+                rotation: targetRotationVector,
+                rcb: [.42, 0, .3, 1.01]
+            }, 1000);
         }
+
     }, [props.question!!, props.active]);
 
     React.useEffect(() => {

@@ -61,7 +61,7 @@ export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: 
             this.scene.add(light.target);
 
             //ADD RENDERER
-            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer = new THREE.WebGLRenderer({ antialias: false });
             this.renderer.setPixelRatio(window.devicePixelRatio);
             this.renderer.setClearColor('#fffffe');
             this.renderer.setSize(width, height);

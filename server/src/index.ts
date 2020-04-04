@@ -35,11 +35,10 @@ app
   // })
 
 
-  .use(async (req, res, next) => {
-    let md = new MobileDetect(req.headers['user-agent'] as string);
-    res.cookie('isMobile', md.mobile() ? 'true' : 'false');
-    next();
-  })
+  // .use(async (req, res, next) => {
+    
+  //   next();
+  // })
 
   .use(async (req, res, next) => {
     await initMDB();
@@ -77,6 +76,10 @@ app
     console.log(req.headers);
   })
   .get('/:id', async (req, res) => {
+    let md = new MobileDetect(req.headers['user-agent'] as string);
+    console.log('query', req.query.play);
+    res.cookie('isMobile', ((req.query.play || md.mobile()) ? 'true' : 'false'));
+
     res.sendFile(path.resolve(__dirname + '/../../build/index.html'));
   })
 

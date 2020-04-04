@@ -42,7 +42,7 @@ export class SessionModel {
         this.io = this.init();
         this.myId = Cookie.get('quizzz-game-user')!.split(':')[0];
 
-        this.isMobile = (Cookie.get('isMobile') === 'true') || !!new URLSearchParams(window.location.search).get('play');
+        this.isMobile = (Cookie.get('isMobile') === 'true');
     }
 
     init = () => {

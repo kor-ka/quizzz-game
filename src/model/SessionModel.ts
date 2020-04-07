@@ -70,7 +70,7 @@ export class SessionModel {
         console.log('[event]', event);
         if (event.type === 'UserUpdatedEvent' || event.type === 'SessionUserJoinedEvent') {
             let current = this.users.get(event.user._id);
-            if (!event.user.name) {
+            if (!event.user.name && event.user._id !== this.myId) {
                 return;
             }
             this.users.set(event.user._id, { ...event.user, index: current ? current.index : this.users.size });

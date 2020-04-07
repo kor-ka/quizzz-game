@@ -48,22 +48,34 @@ export const SessionStateComponent = () => {
     }, [state.state]);
 
     return <FlexLayout style={{ flexGrow: 1, zIndex: 100 }}>
-        <Profile />
+        {!session!.namePreset && <Profile />}
 
         {(state.state === 'await' || state.state === 'countdown') &&
-            <Button
-                onClick={startStop}
-                style={{
-                    opacity: loading ? 0.5 : 1,
-                    position: 'fixed',
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    fontSize: 120,
-                    paddingBottom: 25,
-                }} >
-                {state.state === 'await' ? 'start' : Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000))}
-            </Button>}
+            <FlexLayout style={{
+                left: 0,
+                right: 0,
+                bottom: 0,
+                padding: 20,
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <Button
+                    onClick={startStop}
+                    style={{
+                        paddingTop: 20,
+                        paddingLeft: 30,
+                        paddingRight: 30,
+                        paddingBottom: 20,
+                        opacity: loading ? 0.5 : 1,
+                        position: 'fixed',
+                        bottom: 20,
+                        fontSize: 50,
+                        borderRadius: 50
+                    }} >
+                    {state.state === 'await' ? "Press start 🕹" : "Wait for me!"}{state.state === 'countdown' && <span style={{ width: 50 }}>{Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000))}</span>}
+                </Button>
+            </FlexLayout>
+        }
         {/* <Button onClick={reset} >RESET</Button> */}
     </FlexLayout>
 }

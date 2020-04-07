@@ -23,7 +23,7 @@ export let createUser = async () => {
     let token = makeId();
     let u = await USERS().insertOne({ token });
     console.warn(u.insertedId);
-    return { id: u.insertedId.toHexString(), token };
+    return { _id: u.insertedId, token };
 }
 
 export let getUser = (id: string, token?: string) => {
@@ -32,6 +32,6 @@ export let getUser = (id: string, token?: string) => {
 
 export let handleMessage = async (id: string, message: Message) => {
     if (message.type === 'UserRename') {
-        USERS().updateOne({ _id: new ObjectId(id) }, { $set: { name: message.name } });
+        await USERS().updateOne({ _id: new ObjectId(id) }, { $set: { name: message.name } });
     }
 }

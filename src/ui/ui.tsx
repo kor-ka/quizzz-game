@@ -53,7 +53,7 @@ const ButtonInner = Glamorous.div<{ type?: 'danger' }>((props) => ({
     paddingTop: 11,
     paddingBottom: 9,
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     justifyContent: 'center',
     borderRadius: 10,
     cursor: 'pointer',

@@ -34,6 +34,7 @@ export class SessionModel {
     meListeners = new Set<(me: ClientUser) => void>();
 
     isMobile?: boolean;
+    namePreset?: boolean;
 
     game = new GameModel(this);
 
@@ -43,6 +44,7 @@ export class SessionModel {
         this.myId = Cookie.get('quizzz-game-user')!.split(':')[0];
 
         this.isMobile = (Cookie.get('isMobile') === 'true');
+        this.namePreset = !!new URLSearchParams(window.location.search).get('name');
     }
 
     init = () => {

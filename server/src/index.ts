@@ -7,7 +7,7 @@ import { createServer } from 'http';
 import * as socketIo from 'socket.io';
 import * as MobileDetect from 'mobile-detect';
 import { initMDB } from './MDB';
-import { createUser, getUser } from './user/User';
+import { createUser, getUser, User, USERS } from './user/User';
 import { createSession } from './session/Session';
 import { UserConnection } from './user/UserConnection';
 import { startWorker } from './workQueue/WorkQueue';
@@ -36,7 +36,7 @@ app
 
 
   // .use(async (req, res, next) => {
-    
+
   //   next();
   // })
 
@@ -44,23 +44,6 @@ app
     await initMDB();
     next();
   })
-
-  // auth if not
-  .use(async (req, res, next) => {
-    for (let k of Object.keys(req.cookies || {})) {
-      if (k === 'quizzz-game-user') {
-        let auth = req.cookies[k].split(':');
-        if (await getUser(auth[0], auth[1])) {
-          next();
-          return;
-        }
-      }
-    }
-    let u = await createUser();
-    res.cookie('quizzz-game-user', `${u.id}:${u.token}`, { expires: notSoSoon });
-    next();
-  })
-
 
   .get('/', (req, res) => {
     res.redirect('/new');
@@ -76,9 +59,29 @@ app
     console.log(req.headers);
   })
   .get('/:id', async (req, res) => {
-    let md = new MobileDetect(req.headers['user-agent'] as string);
-    console.log('query', req.query.play);
-    res.cookie('isMobile', ((req.query.play || md.mobile()) ? 'true' : 'false'));
+    // detect host
+    res.cookie('isMobile', req.query.host ? 'false' : 'true', { secure: true, sameSite: 'None' });
+    // auth if not
+    let user: User | undefined;
+    for (let k of Object.keys(req.cookies || {})) {
+      if (k === 'quizzz-game-user') {
+        let auth = req.cookies[k].split(':');
+        user = await getUser(auth[0], auth[1]);
+        if (user) {
+          // reset old auth - new flags
+          res.cookie('quizzz-game-user', `${auth[0]}:${auth[1]}`, { expires: notSoSoon, secure: true, sameSite: 'None' });
+          break;
+        }
+      }
+    }
+    if (!user) {
+      user = await createUser();
+      res.cookie('quizzz-game-user', `${user._id}:${user.token}`, { expires: notSoSoon, secure: true, sameSite: 'None' });
+    }
+    if (req.query.name) {
+      await USERS().updateOne({ _id: user._id }, { $set: { name: req.query.name } });
+    }
+
 
     res.sendFile(path.resolve(__dirname + '/../../build/index.html'));
   })

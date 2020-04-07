@@ -54,7 +54,7 @@ export class GameModel {
                     this.notify();
                 }, 2000);
             }
-            this.setState({ id: event.gid, question: event.question, state: targetState, ttl: event.ttl || 0, stack });
+            this.setState({ id: event.gid, question: event.question || this.state.question, state: targetState, ttl: event.ttl || 0, stack });
 
             notifyers.add(this.notify);
 

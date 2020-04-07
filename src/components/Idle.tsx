@@ -6,7 +6,7 @@ import { Mesh } from 'three';
 import { getCard } from './Helpers';
 
 const getCyl = (color: string) => {
-    let geo = new THREE.CylinderGeometry(500, 500, 500, 10, 1, true);
+    let geo = new THREE.CylinderGeometry(900, 900, 1000, 10, 1, true);
     geo.rotateX(THREE.Math.degToRad(90));
     let res = new THREE.Mesh(geo, spiralTexture(color))
     return res;
@@ -63,7 +63,7 @@ export const Idle = React.memo((props: { active: boolean }) => {
 
         // TUBE
         let cyls: THREE.Mesh[] = [];
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 25; i++) {
             cyls.push(getCyl('#000'));
         }
 
@@ -71,17 +71,17 @@ export const Idle = React.memo((props: { active: boolean }) => {
 
         // CARD
         let card = getCard({ depth: 30 });
-        card.position.z -= 800;
+        card.position.z -= 1200;
         holder.add(card);
 
         let dispose = scene.subscribeTicks((now) => {
 
             // TUBE ANIMATION
             let time = 5000 * cyls.length;
-            let distance = cyls.length * 500;
+            let distance = cyls.length * 1000;
             cyls.map((c, i) => {
                 let interoplated = ((now - time / cyls.length * i) % time) / time;
-                c.position.z = distance * interoplated - cyls.length * 500 + 200;
+                c.position.z = distance * interoplated - cyls.length * 1000 + 300;
                 c.rotateZ(0.003);
             });
 

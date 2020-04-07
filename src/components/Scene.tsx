@@ -8,7 +8,6 @@ import { cardGradient, gradientShaderMaterial } from "../materials/gradient";
 export const isChromium = (window as any).chrome;
 
 export const SceneContext = React.createContext<{ scene: THREE.Scene, cam: THREE.PerspectiveCamera, subscribeTicks: (listener: (now: number) => void) => () => void }>({} as any);
-export const minSceneCamZ = 500;
 
 export class Scene extends React.PureComponent<{}, { scene?: THREE.Scene, cam?: THREE.PerspectiveCamera }> {
     ref = React.createRef<HTMLDivElement>();

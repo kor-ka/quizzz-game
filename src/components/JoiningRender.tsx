@@ -6,6 +6,7 @@ import { getCard, getTextMesh } from './Helpers';
 import { useAnimation } from './useAnimation';
 import { ClientUserIndexed } from '../model/SessionModel';
 import { spiralCoord } from '../utils/spiralCoord';
+import { camIdlePostion } from './SesssionComponent';
 
 
 const UserCards = (props: { user: ClientUserIndexed }) => {
@@ -18,7 +19,7 @@ const UserCards = (props: { user: ClientUserIndexed }) => {
 
         card.rotation.y = THREE.Math.degToRad(180);
 
-        card.position.z = 700;
+        card.position.z = camIdlePostion.z - 300;
 
         let coords = spiralCoord(props.user.index + 2);
 
@@ -29,7 +30,7 @@ const UserCards = (props: { user: ClientUserIndexed }) => {
 
         // drop to target position
         let targetPostion = card.position.clone();
-        targetPostion.z -= 700;
+        targetPostion.z -= 1200;
         cardAnimatTo({ position: targetPostion, pcb: [.74, .08, .89, .78] }, 500)
 
         scene.scene.add(card);
@@ -68,7 +69,7 @@ export const JoiningRender = () => {
         session!.subscribeUsers(u => {
             setUsers(u);
             // let map = new Map<string, ClientUserIndexed>();
-            // for (let i = 0; i < 10; i++) {
+            // for (let i = 0; i < 2; i++) {
             //     map.set(i + '', { index: i, _id: i + '', name: i + '' });
             // }
             // setUsers(map);

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as React from "react";
 import { SessionContext } from "../App";
-import { Scene, SceneContext, minSceneCamZ } from "./Scene";
+import { Scene, SceneContext } from "./Scene";
 import { SessionStateComponent, Game as GameControls } from "./Controls";
 import { GameRender } from './GameRender';
 import { JoiningRender } from './JoiningRender';
@@ -12,7 +12,7 @@ import { Idle } from './Idle';
 export const camGamePostion = new Vector3();
 export const camGameRotation = new Vector3();
 
-camGamePostion.z = minSceneCamZ;
+camGamePostion.z = -1500
 camGamePostion.y = -500;
 camGameRotation.x = THREE.Math.degToRad(45);
 
@@ -68,6 +68,7 @@ export const SceneRender = () => {
             users = users;
             update();
         });
+        scene.cam.rotation.setFromVector3(camIdleRotation);
         return () => {
             sub1();
             sub2();
@@ -75,7 +76,6 @@ export const SceneRender = () => {
     }, []);
 
     React.useEffect(() => {
-
         if (state === 'game' || state === 'countdown') {
             camAnimatTo({ position: camGamePostion, rotation: camGameRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
         } else if (state === 'joining') {
@@ -83,7 +83,6 @@ export const SceneRender = () => {
         } else if (state === 'idle') {
             camAnimatTo({ position: camIdlePostion, rotation: camIdleRotation, pcb: IN_OUT, rcb: IN_OUT }, 1000);
         }
-
     }, [state]);
 
     const toIdle = React.useCallback(() => { setState('idle') }, []);

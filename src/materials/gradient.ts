@@ -35,10 +35,10 @@ export const cardGradient = (w: number, h: number, radius: number, padding: numb
 export var gradientShaderMaterial = new THREE.ShaderMaterial({
   uniforms: {
     color1: {
-      value: new THREE.Color("#060606")
+      value: new THREE.Color("#090909")
     },
     color2: {
-      value: new THREE.Color("#090909")
+      value: new THREE.Color("#080808")
     }
   },
   vertexShader: `

@@ -19,7 +19,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     React.useEffect(() => {
 
         // position above target place
-        card.position.z = props.index * 6 + 700;
+        card.position.z = props.index * 6 -1300;
         card.rotation.z = THREE.Math.degToRad(-45);
 
         // shake stack
@@ -48,7 +48,7 @@ export const GameCard = React.memo((props: { qid: string, category: string, ques
     React.useEffect(() => {
         if (!props.active) {
             console.log(props.qid, 'animate to old');
-            cardAnimatTo({ position: new Vector3(100, 0, 700), rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(0)) }, 200);
+            cardAnimatTo({ position: new Vector3(100, 0, -1300), rotation: new Vector3(THREE.Math.degToRad(-90), 0, THREE.Math.degToRad(0)) }, 200);
         } else if (props.question) {
             // find position infront of cam
             let base = 310 + 20;

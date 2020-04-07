@@ -72,7 +72,7 @@ export const SessionStateComponent = () => {
                         fontSize: 50,
                         borderRadius: 50
                     }} >
-                    {state.state === 'await' ? "Press start 🕹" : "Wait for me!"}{state.state === 'countdown' && <span style={{ width: 50 }}>{Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000))}</span>}
+                    {state.state === 'await' ? "Press to start 🕹" : "Wait for me!"}{state.state === 'countdown' && <span style={{ width: 50 }}>{Math.floor(Math.max(0, (state.ttl - new Date().getTime()) / 1000))}</span>}
                 </Button>
             </FlexLayout>
         }
@@ -183,14 +183,18 @@ export const GameTTL = React.memo(() => {
     return <>{timeout}</>;
 });
 
-export const Question = React.memo((props: { q: ClientQuestion, gid: string }) => {
+export const Question = React.memo((props: { state: GameState, gid: string }) => {
+    const q = props.state.question;
     const onPick = React.useCallback((answer: string) => {
-        if (props.q.answer) {
+        if (!q) {
             return;
         }
-        session!.io.emit({ type: 'Answer', gid: props.gid, answer, qid: props.q._id });
+        if (q && q.answer) {
+            return;
+        }
+        session!.io.emit({ type: 'Answer', gid: props.gid, answer, qid: q._id });
 
-    }, []);
+    }, [props.gid, props.state.question && props.state.question._id]);
     let session = React.useContext(SessionContext);
 
 
@@ -198,7 +202,7 @@ export const Question = React.memo((props: { q: ClientQuestion, gid: string }) =
     let offset = (310 + 20) * aspect;
     return <>
 
-        <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll' }} divider={0}>
+        <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll', transform: `translateY(${props.state.state === 'question' ? 0 : '100%'})`, transition: 'transform 500ms' }} divider={0}>
 
             <FlexLayout style={{ height: offset }} divider={0} >
                 {/* <Button onClick={() => {
@@ -207,8 +211,8 @@ export const Question = React.memo((props: { q: ClientQuestion, gid: string }) =
             </FlexLayout>
             <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
                 <FlexLayout>
-                    {props.q.open && <AnswerOpen correctAnswer={props.q.answer} onPick={onPick} />}
-                    {props.q.textAnswers && <AnswerText answers={props.q.textAnswers} correctAnswer={props.q.answer} onPick={onPick} />}
+                    {q && q.open && <AnswerOpen key={q._id} correctAnswer={q.answer} onPick={onPick} />}
+                    {q && q.textAnswers && <AnswerText key={q._id} answers={q.textAnswers} correctAnswer={q.answer} onPick={onPick} />}
                 </FlexLayout>
             </FlexLayout>
         </FlexLayout>
@@ -217,7 +221,7 @@ export const Question = React.memo((props: { q: ClientQuestion, gid: string }) =
 });
 
 export const Results = React.memo((props: { game: GameState }) => {
-    return <FlexLayout style={{ height: '100%', width: '100%', padding: 20, overflowY: 'scroll' }}>
+    return <FlexLayout style={{ height: '100%', width: '100%', top: 0, padding: 20, overflowY: 'scroll', position: 'absolute', pointerEvents: 'none', transform: `translateY(${(props.game.state === 'results' || props.game.state === 'subResults') ? 0 : '-100%'})`, transition: 'transform 500ms' }}>
         {Array.from(props.game.scores.values()).sort((a, b) => b.score - a.score).map(us => {
             return <FlexLayout style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'white' }}>{us.user.name + ': ' + us.score}</FlexLayout>
         })}
@@ -249,11 +253,11 @@ export const Game = React.memo(() => {
 
 
     return <>
-        {session!.isMobile && state.state === 'question' && state.question && <Question key={state.question._id} q={state.question} gid={state.id!} />}
+        {session!.isMobile && <Question state={state} gid={state.id!} />}
 
         {/* <Question key={'asd'} q={{ _id: '12', category: 'sd', text: 'asd', textAnswers: ['1', '2', '3'], answer: '1' }} gid={'asd'} /> */}
 
-        {(state.state === 'subResults' || state.state === 'results') && <Results game={state} />}
+        <Results game={state} />
         {<Button style={{
             backgroundColor: 'transparent',
             opacity: 0.5,
@@ -262,7 +266,7 @@ export const Game = React.memo(() => {
             position: 'fixed',
             bottom: 0, left: 20,
             borderRadius: 48,
-            width: 148,
+            width: 48,
             height: 48,
             textAlign: 'left'
 

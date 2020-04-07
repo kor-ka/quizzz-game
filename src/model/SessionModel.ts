@@ -68,22 +68,17 @@ export class SessionModel {
 
     handleEvent = (event: Event, notifyers: Set<() => void>) => {
         console.log('[event]', event);
-        if (event.type === 'UserUpdatedEvent') {
+        if (event.type === 'UserUpdatedEvent' || event.type === 'SessionUserJoinedEvent') {
             let current = this.users.get(event.user._id);
+            if (!event.user.name) {
+                return;
+            }
             this.users.set(event.user._id, { ...event.user, index: current ? current.index : this.users.size });
             notifyers.add(this.notifyUser);
             if (event.user._id === this.myId) {
                 this.me = event.user;
                 notifyers.add(this.notifyMeUser);
             }
-        } else if (event.type === 'SessionUserJoinedEvent') {
-            let current = this.users.get(event.user._id);
-            this.users.set(event.user._id, { ...event.user, index: current ? current.index : this.users.size });
-            if (event.user._id === this.myId) {
-                this.me = event.user;
-                notifyers.add(this.notifyMeUser);
-            }
-            notifyers.add(this.notifyUser);
         } else if (event.type === 'SessionUserLeftEvent') {
             this.users.delete(event.user._id);
             notifyers.add(this.notifyUser);

@@ -60,11 +60,11 @@ export class GameModel {
 
         } else if (event.type === 'GameScoreChangedEvent') {
             let user = this.session.users.get(event.uid);
-            if (user) {
+            if (user && user.name) {
                 this.state.scores.set(event.uid, { user, score: event.score })
                 this.setState({ scores: new Map(this.state.scores) });
+                notifyers.add(this.notify);
             }
-            notifyers.add(this.notify);
 
         }
     }

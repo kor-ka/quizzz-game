@@ -178,6 +178,9 @@ export const GameTTL = React.memo(() => {
                 clearInterval(interval);
             }
         }, 100);
+        return () => {
+            clearInterval(interval);
+        };
     }, [state.ttl]);
 
     return <>{timeout}</>;

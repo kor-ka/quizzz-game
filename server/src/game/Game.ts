@@ -2,7 +2,7 @@ import { ObjectId } from "bson";
 import { MDB } from "../MDB";
 import { WORK_QUEUE_GAME, GameChangeState, WORK_QUEUE_SESSION } from "../workQueue/WorkQueue";
 import { Message } from "../entity/messages";
-import { onGameStarted } from "../session/Session";
+import { onGameStarted, SESSION_USER } from "../session/Session";
 import { ClientSession } from "mongodb";
 
 export type GameState = 'wait' | 'question' | 'subResults' | 'results';
@@ -99,6 +99,10 @@ export const startGame = async (sid: ObjectId, after: number, ctx: ClientSession
 export const moveToState = async (args: GameChangeState) => {
 
     if (args.to === 'subResults') {
+        let gq = await GAME_QUESTION().findOne({ gid: args.gid, qid: args.qid })
+        if (gq && gq.completed) {
+            return;
+        }
         // mark question as completed
         await GAME_QUESTION().update({ gid: args.gid, qid: args.qid }, { $set: { completed: true } });
 
@@ -162,5 +166,11 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
         points *= game.qid.equals(q) ? 1 : 0;
         points *= (question.answer.toLowerCase() === answer.toLowerCase()) ? 1 : 0;
         await GAME_USER_ANSWER().updateOne({ gid: g, qid: q, uid: u }, { $set: { answer, points } }, { upsert: true });
+
+        let sessionUsers = await SESSION_USER().find({ sid: game.sid.toHexString() }).toArray();
+        let answers = await GAME_USER_ANSWER().find({ gid: g, qid: q }).toArray();
+        if (question.open !== 'text' && sessionUsers.length === answers.length) {
+            await moveToState({ sid: game.sid, gid: g, qid: q, type: 'GameChangeState', to: 'subResults', ttl: 0, _id: q });
+        }
     }
 }

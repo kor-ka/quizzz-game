@@ -59,8 +59,10 @@ app
     console.log(req.headers);
   })
   .get('/:id', async (req, res) => {
+    let local = req.hostname.includes('localhost');
+    let secureCookie = local ? {} : { secure: true, sameSite: 'None' };
     // detect host
-    res.cookie('isMobile', req.query.host ? 'false' : 'true', { secure: true, sameSite: 'None' });
+    res.cookie('isMobile', req.query.host ? 'false' : 'true', { ...secureCookie });
     // auth if not
     let user: User | undefined;
     for (let k of Object.keys(req.cookies || {})) {
@@ -69,14 +71,14 @@ app
         user = await getUser(auth[0], auth[1]);
         if (user) {
           // reset old auth - new flags
-          res.cookie('quizzz-game-user', `${auth[0]}:${auth[1]}`, { expires: notSoSoon, secure: true, sameSite: 'None' });
+          res.cookie('quizzz-game-user', `${auth[0]}:${auth[1]}`, { expires: notSoSoon, ...secureCookie });
           break;
         }
       }
     }
     if (!user) {
       user = await createUser();
-      res.cookie('quizzz-game-user', `${user._id}:${user.token}`, { expires: notSoSoon, secure: true, sameSite: 'None' });
+      res.cookie('quizzz-game-user', `${user._id}:${user.token}`, { expires: notSoSoon, ...secureCookie });
     }
     if (req.query.name) {
       await USERS().updateOne({ _id: user._id }, { $set: { name: req.query.name } });

@@ -3,11 +3,11 @@ import { User, getUser, handleMessage as userHandeMessage } from './User';
 import { Event } from '../entity/events';
 import { Message } from '../entity/messages';
 import { SessionWatcher, getSessionWatcher } from '../session/SesionWatcher';
-import { handleMessage as sessionHandleMessage } from '../session/Session';
+import { handleMessage as sessionHandleMessage, SESSIONS } from '../session/Session';
 import { gameHandleMessage } from '../game/Game';
 import { makeId } from '../utils/makeId';
 import { MDBClient } from '../MDB';
-import { ClientSession } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
 
 export class UserConnection {
     id = makeId();
@@ -82,7 +82,14 @@ export class UserConnection {
             }
             // subscribe updates
             if (message.type === 'InitSession') {
-                this.sessionWatcher = await getSessionWatcher(message.id);
+                let _id;
+                try {
+                    _id = ObjectId.createFromHexString(message.id)
+                } catch (e) {
+                    // 
+                }
+                let s = await SESSIONS().findOne({ $or: [{ _id }, { alias: message.id }] });
+                this.sessionWatcher = await getSessionWatcher(s._id.toHexString());
                 this.sessionWatcher.addUserConnection(this);
             }
 

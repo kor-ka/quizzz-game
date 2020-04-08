@@ -12,6 +12,7 @@ export interface Session {
     state: SessionState;
     stateTtl?: number;
     gameId?: ObjectId;
+    alias?: string;
 }
 
 export interface SessionUser {
@@ -24,8 +25,8 @@ export interface SessionUser {
     topScore?: number;
 }
 
-export let createSession = async () => {
-    return await SESSIONS().insertOne({ state: 'await' });
+export let createSession = async (alias?: string) => {
+    return await SESSIONS().insertOne({ state: 'await', alias });
 }
 export let handleMessage = async (message: Message, ctx: ClientSession) => {
     if (message.type === 'SessionStartGameCountdown') {

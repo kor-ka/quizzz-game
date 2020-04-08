@@ -8,9 +8,10 @@ import * as socketIo from 'socket.io';
 import * as MobileDetect from 'mobile-detect';
 import { initMDB } from './MDB';
 import { createUser, getUser, User, USERS } from './user/User';
-import { createSession } from './session/Session';
+import { createSession, SESSIONS } from './session/Session';
 import { UserConnection } from './user/UserConnection';
 import { startWorker } from './workQueue/WorkQueue';
+import { ObjectId } from 'mongodb';
 
 const notSoSoon = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365 * 1000);
 
@@ -59,10 +60,22 @@ app
     console.log(req.headers);
   })
   .get('/:id', async (req, res) => {
+    let id = req.params['id'];
+    let _id;
+    try {
+      _id = ObjectId.createFromHexString(id)
+    } catch (e) {
+      // 
+    }
+    let session = await SESSIONS().findOne({ $or: [{ _id }, { alias: id }] });
+    if (!session) {
+      await createSession(id);
+    }
     let local = req.hostname.includes('localhost');
     let secureCookie = local ? {} : { secure: true, sameSite: 'None' };
     // detect host
-    res.cookie('isMobile', req.query.host ? 'false' : 'true', { ...secureCookie });
+    let md = new MobileDetect(req.headers['user-agent'] as string);
+    res.cookie('isMobile', (md.mobile() || req.query.name) ? 'true' : 'false', { ...secureCookie });
     // auth if not
     let user: User | undefined;
     for (let k of Object.keys(req.cookies || {})) {

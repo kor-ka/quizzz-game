@@ -167,9 +167,9 @@ export const answer = async (uid: string, qid: string, gid: string, answer: stri
         points *= (question.answer.toLowerCase() === answer.toLowerCase()) ? 1 : 0;
         await GAME_USER_ANSWER().updateOne({ gid: g, qid: q, uid: u }, { $set: { answer, points } }, { upsert: true });
 
-        let sessionUsers = await SESSION_USER().find({ sid: game.sid.toHexString() }).toArray();
+        let sessionUsers = await SESSION_USER().find({ sid: game.sid.toHexString(), visible: true, online: true }).toArray();
         let answers = await GAME_USER_ANSWER().find({ gid: g, qid: q }).toArray();
-        if (question.open !== 'text' && sessionUsers.length === answers.length) {
+        if ((question.open || 'false') === 'false' && sessionUsers.length === answers.length) {
             await moveToState({ sid: game.sid, gid: g, qid: q, type: 'GameChangeState', to: 'subResults', ttl: 0, _id: q });
         }
     }

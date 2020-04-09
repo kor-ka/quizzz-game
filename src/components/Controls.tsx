@@ -127,7 +127,7 @@ export const AnswerText = React.memo((props: { answers: string[], correctAnswer?
     }, [props.correctAnswer]);
 
     return <>
-        {props.answers.map(a => a.toLocaleLowerCase()).map((a) => <Button style={{
+        {props.answers.map(a => a.toLocaleLowerCase()).map((a, i) => <Button key={`${a}_${i}`} style={{
             backgroundColor:
                 a === props.correctAnswer ? 'limegreen' :
                     (a === pickedAnswer ? (props.correctAnswer ? 'red' : 'black')
@@ -205,17 +205,17 @@ export const Question = React.memo((props: { state: GameState, gid: string }) =>
     let offset = (310 + 20) * aspect;
     return <>
 
-        <FlexLayout style={{ position: 'absolute', height: '100%', width: '100%', overflowY: 'scroll', transform: `translateY(${props.state.state === 'question' ? 0 : '100%'})`, transition: 'transform 500ms' }} divider={0}>
+        <FlexLayout style={{ position: 'fixed', height: '100%', width: '100%', overflowY: 'scroll', transform: `translateY(${props.state.state === 'question' ? 0 : '100%'})`, transition: 'transform 500ms' }} divider={0}>
 
             <FlexLayout style={{ height: offset }} divider={0} >
                 {/* <Button onClick={() => {
-        setState({ ...state, state: state.state === 'question' ? 'subResults' : 'question' })
+        setState({ ...state, state: state.state === 'question' ? 'subResults' : 'question' })`
     }}> asdasd</Button> */}
             </FlexLayout>
             <FlexLayout style={{ flexGrow: 1, backgroundColor: 'rgba(100,100,100, 0.5)', padding: 20, paddingBottom: 68 }} divider={0}>
                 <FlexLayout>
-                    {q && q.open && <AnswerOpen key={q._id} correctAnswer={q.answer} onPick={onPick} />}
-                    {q && q.textAnswers && <AnswerText key={q._id} answers={q.textAnswers} correctAnswer={q.answer} onPick={onPick} />}
+                    {q && q.open && <AnswerOpen key={q._id + '_open'} correctAnswer={q.answer} onPick={onPick} />}
+                    {q && q.textAnswers && !!q.textAnswers.length && <AnswerText key={q._id + '_text'} answers={q.textAnswers} correctAnswer={q.answer} onPick={onPick} />}
                 </FlexLayout>
             </FlexLayout>
         </FlexLayout>
@@ -224,9 +224,9 @@ export const Question = React.memo((props: { state: GameState, gid: string }) =>
 });
 
 export const Results = React.memo((props: { game: GameState }) => {
-    return <FlexLayout style={{ height: '100%', width: '100%', top: 0, padding: 20, overflowY: 'scroll', position: 'absolute', pointerEvents: 'none', transform: `translateY(${(props.game.state === 'results' || props.game.state === 'subResults') ? 0 : '-100%'})`, transition: 'transform 500ms' }}>
+    return <FlexLayout style={{ height: '1000px', width: '100%', top: 0, padding: 20, overflowY: 'scroll', position: 'fixed', pointerEvents: 'none', transform: `translateY(${(props.game.state === 'results' || props.game.state === 'subResults') ? 0 : '-100%'})`, transition: 'transform 500ms' }}>
         {Array.from(props.game.scores.values()).sort((a, b) => b.score - a.score).map(us => {
-            return <FlexLayout style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'white' }}>{us.user.name + ': ' + us.score}</FlexLayout>
+            return <FlexLayout key={us.user._id} style={{ padding: 20, backgroundColor: 'rgba(100,100,100, 0.5)', borderRadius: 20, color: 'white' }}>{us.user.name + ': ' + us.score}</FlexLayout>
         })}
     </FlexLayout>
 });
@@ -258,7 +258,15 @@ export const Game = React.memo(() => {
     return <>
         {session!.isMobile && <Question state={state} gid={state.id!} />}
 
-        {/* <Question key={'asd'} q={{ _id: '12', category: 'sd', text: 'asd', textAnswers: ['1', '2', '3'], answer: '1' }} gid={'asd'} /> */}
+        {/* <Question state={{
+            question: { _id: '12', category: 'sd', text: 'asd', textAnswers: [
+                '1', '2', '3',
+            ], answer: '1' },
+            scores: new Map(),
+            state: 'results',
+            ttl: 10000,
+            stack: [],
+        }} gid={''} /> */}
 
         <Results game={state} />
         {<Button style={{
